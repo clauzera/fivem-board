@@ -26,9 +26,9 @@
         <div>
           <div class="flex items-center gap-2">
             <h1 class="font-bold text-base sm:text-lg tracking-tight text-white">FiveM Dev & QA Hub</h1>
-            <span id="syncStatus" class="inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              Live Sync
+            <span id="syncStatus" class="inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30">
+              <span class="w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping"></span>
+              Firebase Live
             </span>
           </div>
           <p class="text-xs text-slate-400 hidden sm:block">Board colaborativ pentru echipă • Suport Screenshot-uri (Paste / Upload) & Audit Log</p>
@@ -87,23 +87,9 @@
     </div>
   </header>
 
-  <!-- FIREBASE CONFIG BANNER (Optional - pentru sincronizare multi-user reală) -->
-  <div id="localModeBanner" class="bg-indigo-950/60 border-b border-indigo-800/50 px-4 py-2 text-xs text-indigo-200 flex flex-wrap items-center justify-between gap-2">
-    <div class="flex items-center gap-2">
-      <span>⚡</span>
-      <span>
-        <strong>Mod Local / Demo activ:</strong> Datele și pozele se salvează în browserul tău. Pentru sincronizare live între toți cei 10–15 prieteni, conectează URL-ul tău Firebase Realtime Database.
-      </span>
-    </div>
-    <div class="flex items-center gap-2">
-      <button onclick="openFirebaseModal()" class="underline hover:text-white font-medium">Conectează Firebase URL</button>
-      <button onclick="document.getElementById('localModeBanner').classList.add('hidden')" class="text-indigo-400 hover:text-white ml-2">✕</button>
-    </div>
-  </div>
-
   <!-- KANBAN BOARD -->
   <main class="flex-1 overflow-x-auto p-4">
-    <div id="boardContainer" class="max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4 min-h-[calc(100vh-140px)]">
+    <div id="boardContainer" class="max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4 min-h-[calc(100vh-110px)]">
       <!-- Coloanele se randează dinamic din JS -->
     </div>
   </main>
@@ -336,31 +322,10 @@
     </div>
   </div>
 
-  <!-- MODAL FIREBASE URL -->
-  <div id="firebaseModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-md p-5 shadow-2xl">
-      <h3 class="font-bold text-base text-white mb-1">Conectare Firebase Realtime Database</h3>
-      <p class="text-xs text-slate-400 mb-3">
-        Lipește URL-ul bazei tale de date Firebase (ex: <code class="text-sky-400">https://proiectul-tau-default-rtdb.europe-west1.firebasedatabase.app</code>) pentru sincronizare live între toți prietenii.
-      </p>
-      <input
-        id="firebaseUrlInput"
-        type="url"
-        placeholder="https://...-default-rtdb.firebaseio.com"
-        class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white mb-4 focus:outline-none focus:border-sky-500"
-      />
-      <div class="flex justify-between items-center">
-        <button onclick="disconnectFirebase()" class="text-xs text-rose-400 hover:underline">Revino la Mod Local</button>
-        <div class="flex gap-2">
-          <button onclick="closeFirebaseModal()" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white">Anulează</button>
-          <button onclick="saveFirebaseUrl()" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium px-4 py-1.5 rounded-lg">Conectează</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <script>
     // ==================== CONFIGURARE & STARE ====================
+    const FIREBASE_BASE_URL = 'https://fivem-board-default-rtdb.europe-west1.firebasedatabase.app';
+
     const COLUMNS = [
       { id: 'todo', title: '📋 De Făcut (To-Do)', accent: 'border-slate-600' },
       { id: 'inprogress', title: '⚙️ În Lucru', accent: 'border-sky-500' },
@@ -378,28 +343,24 @@
 
     const MAX_IMAGES_PER_TASK = 6;
     let currentUser = localStorage.getItem('fivem_hub_user') || '';
-    let firebaseBaseUrl = localStorage.getItem('fivem_hub_firebase_url') || '';
     let tasks = [];
     let auditLogs = [];
-    let modalDraftImages = []; // Array de obiecte { id, url, addedBy, addedAt }
+    let modalDraftImages = [];
     let pollInterval = null;
+    let isInitialized = false;
 
     // ==================== INITIALIZARE ====================
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', async () => {
       updateUserLabel();
       setupDropzoneAndPaste();
 
       document.getElementById('searchInput').addEventListener('input', renderBoard);
       document.getElementById('categoryFilter').addEventListener('change', renderBoard);
 
-      if (firebaseBaseUrl) {
-        enableFirebaseSync();
-      } else {
-        loadLocalData();
-      }
+      await initFirebaseSync();
 
       if (!currentUser) {
-        setTimeout(() => openNicknameModal(), 400);
+        setTimeout(() => openNicknameModal(), 350);
       }
     });
 
@@ -411,34 +372,103 @@
       document.getElementById('currentUserLabel').textContent = currentUser || 'Setează Nume';
     }
 
-    // ==================== STORAGE (LOCAL + FIREBASE REST POLLING/SYNC) ====================
-    function loadLocalData() {
-      const savedTasks = localStorage.getItem('fivem_hub_tasks_v2');
-      const savedLogs = localStorage.getItem('fivem_hub_logs_v2');
+    // ==================== FIREBASE REALTIME DATABASE SYNC ====================
+    async function initFirebaseSync() {
+      const statusEl = document.getElementById('syncStatus');
+      try {
+        const [tRes, lRes] = await Promise.all([
+          fetch(`${FIREBASE_BASE_URL}/kanban_tasks.json`),
+          fetch(`${FIREBASE_BASE_URL}/kanban_audit_logs.json`)
+        ]);
 
-      if (savedTasks) {
-        tasks = JSON.parse(savedTasks);
-      } else {
-        tasks = getDefaultTasks();
-        saveTasksState();
+        if (!tRes.ok) throw new Error('Eroare permisiuni sau conexiune Firebase');
+
+        const remoteTasks = await tRes.json();
+        const remoteLogs = await lRes.json();
+
+        if (Array.isArray(remoteTasks) && remoteTasks.length > 0) {
+          tasks = remoteTasks;
+        } else {
+          tasks = getDefaultTasks();
+          await saveTasksState();
+        }
+
+        if (Array.isArray(remoteLogs) && remoteLogs.length > 0) {
+          auditLogs = remoteLogs;
+        } else {
+          auditLogs = [{
+            id: 'log_' + Date.now(),
+            type: 'CREATE',
+            actor: 'Sistem',
+            taskTitle: 'Inițializare FiveM Dev & QA Hub',
+            details: 'Board conectat la Firebase Realtime Database (europe-west1)',
+            timestamp: new Date().toISOString()
+          }];
+          await saveLogsState();
+        }
+
+        isInitialized = true;
+        statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Live Sync Activ`;
+        statusEl.className = 'inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
+
+        renderBoard();
+        renderAuditLogs();
+
+        if (pollInterval) clearInterval(pollInterval);
+        pollInterval = setInterval(fetchFromFirebase, 3500);
+      } catch (err) {
+        console.error('Eroare conectare Firebase:', err);
+        statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Eroare Conexiune DB`;
+        statusEl.className = 'inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30';
       }
+    }
 
-      if (savedLogs) {
-        auditLogs = JSON.parse(savedLogs);
-      } else {
-        auditLogs = [{
-          id: 'log_' + Date.now(),
-          type: 'CREATE',
-          actor: 'Sistem',
-          taskTitle: 'Inițializare FiveM Dev & QA Hub',
-          details: 'Board creat cu suport pentru poze și Audit Log',
-          timestamp: new Date().toISOString()
-        }];
-        saveLogsState();
+    async function fetchFromFirebase() {
+      if (!isInitialized) return;
+      try {
+        const [tRes, lRes] = await Promise.all([
+          fetch(`${FIREBASE_BASE_URL}/kanban_tasks.json`),
+          fetch(`${FIREBASE_BASE_URL}/kanban_audit_logs.json`)
+        ]);
+        const remoteTasks = await tRes.json();
+        const remoteLogs = await lRes.json();
+
+        if (Array.isArray(remoteTasks)) {
+          tasks = remoteTasks;
+          renderBoard();
+        }
+        if (Array.isArray(remoteLogs)) {
+          auditLogs = remoteLogs;
+          renderAuditLogs();
+        }
+      } catch (err) {
+        console.warn('Sync temporar întrerupt:', err);
       }
+    }
 
-      renderBoard();
-      renderAuditLogs();
+    async function saveTasksState() {
+      try {
+        await fetch(`${FIREBASE_BASE_URL}/kanban_tasks.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(tasks)
+        });
+      } catch (e) {
+        console.error('Eroare salvare tasks în Firebase:', e);
+      }
+    }
+
+    async function saveLogsState() {
+      if (auditLogs.length > 300) auditLogs = auditLogs.slice(0, 300);
+      try {
+        await fetch(`${FIREBASE_BASE_URL}/kanban_audit_logs.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(auditLogs)
+        });
+      } catch (e) {
+        console.error('Eroare salvare audit logs în Firebase:', e);
+      }
     }
 
     function getDefaultTasks() {
@@ -485,71 +515,6 @@
       ];
     }
 
-    async function saveTasksState() {
-      localStorage.setItem('fivem_hub_tasks_v2', JSON.stringify(tasks));
-      if (firebaseBaseUrl) {
-        try {
-          await fetch(`${firebaseBaseUrl}/kanban_tasks.json`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(tasks)
-          });
-        } catch (e) {
-          console.error('Eroare sync Firebase tasks:', e);
-        }
-      }
-    }
-
-    async function saveLogsState() {
-      if (auditLogs.length > 300) auditLogs = auditLogs.slice(0, 300);
-      localStorage.setItem('fivem_hub_logs_v2', JSON.stringify(auditLogs));
-      if (firebaseBaseUrl) {
-        try {
-          await fetch(`${firebaseBaseUrl}/kanban_audit_logs.json`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(auditLogs)
-          });
-        } catch (e) {
-          console.error('Eroare sync Firebase logs:', e);
-        }
-      }
-    }
-
-    function enableFirebaseSync() {
-      document.getElementById('localModeBanner').classList.add('hidden');
-      const statusEl = document.getElementById('syncStatus');
-      statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping"></span> Firebase Live`;
-      statusEl.className = 'inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30';
-
-      fetchFromFirebase();
-      if (pollInterval) clearInterval(pollInterval);
-      pollInterval = setInterval(fetchFromFirebase, 4000);
-    }
-
-    async function fetchFromFirebase() {
-      if (!firebaseBaseUrl) return;
-      try {
-        const [tRes, lRes] = await Promise.all([
-          fetch(`${firebaseBaseUrl}/kanban_tasks.json`),
-          fetch(`${firebaseBaseUrl}/kanban_audit_logs.json`)
-        ]);
-        const remoteTasks = await tRes.json();
-        const remoteLogs = await lRes.json();
-
-        if (Array.isArray(remoteTasks)) {
-          tasks = remoteTasks;
-          renderBoard();
-        }
-        if (Array.isArray(remoteLogs)) {
-          auditLogs = remoteLogs;
-          renderAuditLogs();
-        }
-      } catch (err) {
-        console.warn('Polling Firebase întrerupt temporar:', err);
-      }
-    }
-
     // ==================== AUDIT LOG HELPER ====================
     function logAudit(type, taskTitle, details) {
       const entry = {
@@ -586,7 +551,6 @@
         }
       });
 
-      // Suport Ctrl+V oriunde când modalul de task este deschis
       window.addEventListener('paste', (e) => {
         const modal = document.getElementById('taskModal');
         if (modal.classList.contains('hidden')) return;
@@ -652,7 +616,6 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
 
-            // Folosim WebP dacă browserul suportă, altfel JPEG
             const dataUrl = canvas.toDataURL('image/webp', quality);
             resolve(dataUrl);
           };
@@ -759,7 +722,7 @@
 
         return `
           <section
-            class="bg-slate-900/70 border border-slate-800 rounded-xl flex flex-col max-h-[calc(100vh-145px)] transition"
+            class="bg-slate-900/70 border border-slate-800 rounded-xl flex flex-col max-h-[calc(100vh-115px)] transition"
             ondragover="event.preventDefault(); this.classList.add('drag-over')"
             ondragleave="this.classList.remove('drag-over')"
             ondrop="handleDrop(event, '${col.id}', this)"
@@ -1134,7 +1097,7 @@
       URL.revokeObjectURL(url);
     }
 
-    // ==================== MODALE NICKNAME & FIREBASE ====================
+    // ==================== MODALA NICKNAME ====================
     function openNicknameModal() {
       document.getElementById('nicknameInput').value = currentUser;
       const m = document.getElementById('nicknameModal');
@@ -1154,33 +1117,6 @@
       updateUserLabel();
       renderBoard();
       closeNicknameModal();
-    }
-
-    function openFirebaseModal() {
-      document.getElementById('firebaseUrlInput').value = firebaseBaseUrl;
-      const m = document.getElementById('firebaseModal');
-      m.classList.remove('hidden');
-      m.classList.add('flex');
-    }
-    function closeFirebaseModal() {
-      const m = document.getElementById('firebaseModal');
-      m.classList.add('hidden');
-      m.classList.remove('flex');
-    }
-    function saveFirebaseUrl() {
-      let url = document.getElementById('firebaseUrlInput').value.trim().replace(/\/+$/, '');
-      if (!url) return;
-      firebaseBaseUrl = url;
-      localStorage.setItem('fivem_hub_firebase_url', firebaseBaseUrl);
-      closeFirebaseModal();
-      enableFirebaseSync();
-    }
-    function disconnectFirebase() {
-      firebaseBaseUrl = '';
-      localStorage.removeItem('fivem_hub_firebase_url');
-      if (pollInterval) clearInterval(pollInterval);
-      closeFirebaseModal();
-      location.reload();
     }
 
     function escapeHtml(str) {

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FiveM Dev & QA Hub — Live Board + Audit Log + Poze</title>
+  <title>FiveM Dev & QA Hub — Board Echipă</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -23,7 +23,7 @@
         5M
       </div>
       <h2 class="font-bold text-lg text-white mb-1">FiveM Dev & QA Hub</h2>
-      <p class="text-xs text-slate-400 mb-5">Acces restricționat. Introdu codul echipei pentru a vedea board-ul.</p>
+      <p class="text-xs text-slate-400 mb-5">Introdu codul echipei pentru a intra în board.</p>
 
       <form id="authLockForm" class="space-y-3 text-left">
         <div>
@@ -41,13 +41,13 @@
           type="submit"
           class="w-full bg-sky-600 hover:bg-sky-500 text-white font-medium py-2 rounded-lg text-sm shadow-lg shadow-sky-600/20 transition"
         >
-          🔓 Deblochează Board-ul
+          🔓 Intră în Board
         </button>
       </form>
     </div>
   </div>
 
-  <!-- TOP NAVBAR -->
+  <!-- TOP NAVBAR SIMPLIFICAT -->
   <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-30 px-4 py-3">
     <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
@@ -56,42 +56,29 @@
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="font-bold text-base sm:text-lg tracking-tight text-white">FiveM Dev & QA Hub</h1>
+            <h1 class="font-bold text-base sm:text-lg tracking-tight text-white">FiveM Board</h1>
             <span id="syncStatus" class="inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30">
               <span class="w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping"></span>
-              Firebase Live
+              Conectare...
             </span>
           </div>
-          <p class="text-xs text-slate-400 hidden sm:block">Board colaborativ securizat • Suport Screenshot-uri & Audit Log</p>
         </div>
       </div>
 
-      <!-- FILTRE & ACTIUNI -->
+      <!-- CAUTARE & BUTOANE RAPIDE -->
       <div class="flex flex-wrap items-center gap-2">
         <input
           id="searchInput"
           type="text"
-          placeholder="Caută task, script, autor..."
-          class="bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:border-sky-500 w-40 sm:w-52"
+          placeholder="Caută task sau nume..."
+          class="bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:border-sky-500 w-44 sm:w-60"
         />
-
-        <select
-          id="categoryFilter"
-          class="bg-slate-800/80 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-sky-500"
-        >
-          <option value="ALL">Toate categoriile</option>
-          <option value="Infrastructură">Infrastructură</option>
-          <option value="Gameplay & Joburi">Gameplay & Joburi</option>
-          <option value="Facțiuni">Facțiuni</option>
-          <option value="UI & Optimizare">UI & Optimizare</option>
-          <option value="Securitate & Anticheat">Securitate & Anticheat</option>
-        </select>
 
         <!-- NICKNAME BADGE -->
         <button
           id="nicknameBtn"
           onclick="openNicknameModal()"
-          title="Schimbă numele tău afișat în echipă"
+          title="Schimbă numele tău"
           class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg text-xs sm:text-sm transition"
         >
           <span class="text-sky-400">👤</span>
@@ -103,7 +90,7 @@
           onclick="toggleAuditDrawer()"
           class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg text-xs sm:text-sm text-amber-300 transition"
         >
-          <span>📜 Audit Log</span>
+          <span>📜 Istoric</span>
           <span id="auditCountBadge" class="bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded text-[11px] font-semibold">0</span>
         </button>
 
@@ -119,9 +106,9 @@
         <!-- ADD TASK BUTTON -->
         <button
           onclick="openTaskModal()"
-          class="flex items-center gap-1.5 bg-sky-600 hover:bg-sky-500 text-white font-medium px-3.5 py-1.5 rounded-lg text-xs sm:text-sm shadow-lg shadow-sky-600/20 transition"
+          class="flex items-center gap-1.5 bg-sky-600 hover:bg-sky-500 text-white font-medium px-4 py-1.5 rounded-lg text-xs sm:text-sm shadow-lg shadow-sky-600/20 transition"
         >
-          <span>+ Task Nou</span>
+          <span>+ Adaugă Task</span>
         </button>
       </div>
     </div>
@@ -129,14 +116,14 @@
 
   <!-- KANBAN BOARD -->
   <main class="flex-1 overflow-x-auto p-4">
-    <div id="boardContainer" class="max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4 min-h-[calc(100vh-110px)]">
+    <div id="boardContainer" class="max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4 min-h-[calc(100vh-100px)]">
       <!-- Coloanele se randează dinamic din JS -->
     </div>
   </main>
 
-  <!-- MODAL ADAUGARE / EDITARE TASK + POZE -->
+  <!-- MODAL ADAUGARE / EDITARE TASK (CURAT SI SIMPLU) -->
   <div id="taskModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-40 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl">
+    <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-xl max-h-[92vh] overflow-y-auto shadow-2xl">
       <div class="flex items-center justify-between px-5 py-4 border-b border-slate-800 sticky top-0 bg-slate-900 z-10">
         <h2 id="taskModalTitle" class="font-bold text-base sm:text-lg text-white">Task Nou</h2>
         <button onclick="closeTaskModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
@@ -145,67 +132,46 @@
       <form id="taskForm" class="p-5 space-y-4">
         <input type="hidden" id="taskId" />
 
-        <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Titlu Task / Bug *</label>
-          <input
-            id="taskTitle"
-            type="text"
-            required
-            placeholder="Ex: Bug duplicare iteme la portbagaj / Verificare resmon poliție"
-            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500"
-          />
-        </div>
-
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-medium text-slate-300 mb-1">Titlu Task *</label>
+            <input
+              id="taskTitle"
+              type="text"
+              required
+              placeholder="Ex: De verificat garaj poliție / Bug inventar..."
+              class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500"
+            />
+          </div>
+
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">Coloană</label>
             <select id="taskColumn" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500">
-              <option value="todo">📋 De Făcut (To-Do)</option>
+              <option value="todo">📋 De Făcut</option>
               <option value="inprogress">⚙️ În Lucru</option>
-              <option value="testing">🧪 De Testat (QA)</option>
-              <option value="bugs">🐛 Bug-uri Găsite</option>
-              <option value="done">✅ Finalizat (Done)</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">Categorie</label>
-            <select id="taskCategory" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500">
-              <option value="Infrastructură">Infrastructură</option>
-              <option value="Gameplay & Joburi">Gameplay & Joburi</option>
-              <option value="Facțiuni">Facțiuni</option>
-              <option value="UI & Optimizare">UI & Optimizare</option>
-              <option value="Securitate & Anticheat">Securitate & Anticheat</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">Prioritate</label>
-            <select id="taskPriority" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500">
-              <option value="low">🟢 Scăzută</option>
-              <option value="medium" selected>🟡 Medie</option>
-              <option value="high">🟠 Ridicată</option>
-              <option value="critical">🔴 Critică / Exploit</option>
+              <option value="testing">🧪 De Testat</option>
+              <option value="bugs">🐛 Bug-uri</option>
+              <option value="done">✅ Finalizat</option>
             </select>
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Descriere & Pași de reproducere / testare</label>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Descriere</label>
           <textarea
             id="taskDescription"
             rows="3"
-            placeholder="Detalii script, coordonate, comenzi de test sau ce trebuie verificat..."
+            placeholder="Ce trebuie făcut sau testat..."
             class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500"
           ></textarea>
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Note QA / Rezultat Testare</label>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Comentariu / Notiță</label>
           <textarea
             id="taskQaNotes"
             rows="2"
-            placeholder="Ex: Testat în 2 jucători pe server, resmon 0.02ms, nu mai dă eroare în F8..."
+            placeholder="Scrie aici un update, o observație sau rezultatul testării..."
             class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500"
           ></textarea>
         </div>
@@ -214,17 +180,16 @@
         <div class="border border-slate-700/80 rounded-xl p-3.5 bg-slate-800/40">
           <div class="flex items-center justify-between mb-2">
             <label class="text-xs font-semibold text-sky-400 flex items-center gap-1.5">
-              <span>🖼️ Poze / Screenshot-uri atașate</span>
+              <span>🖼️ Poze / Screenshot-uri</span>
               <span id="imageCounterLabel" class="text-slate-400 font-normal">(0 / 6)</span>
             </label>
-            <span class="text-[11px] text-slate-400">Suportă <strong>Ctrl+V</strong> (Paste) sau Drag & Drop</span>
+            <span class="text-[11px] text-slate-400">Poți da direct <strong>Ctrl+V</strong></span>
           </div>
 
-          <!-- DROPZONE -->
           <div
             id="imageDropzone"
             onclick="document.getElementById('imageFileInput').click()"
-            class="border-2 border-dashed border-slate-600 hover:border-sky-500 rounded-lg p-4 text-center cursor-pointer transition bg-slate-900/50"
+            class="border-2 border-dashed border-slate-600 hover:border-sky-500 rounded-lg p-3.5 text-center cursor-pointer transition bg-slate-900/50"
           >
             <input
               id="imageFileInput"
@@ -234,16 +199,14 @@
               class="hidden"
               onchange="handleImageFiles(this.files)"
             />
-            <p class="text-xs text-slate-300 font-medium">Click pentru a alege poze, trage fișierele aici sau apasă <kbd class="px-1.5 py-0.5 bg-slate-800 border border-slate-600 rounded text-[10px]">Ctrl + V</kbd></p>
-            <p class="text-[11px] text-slate-500 mt-1">Se comprimă automat (max 1280px WebP/JPEG) pentru încărcare instantă în echipă</p>
+            <p class="text-xs text-slate-300 font-medium">Click pentru a încărca poze, trage-le aici sau apasă <kbd class="px-1.5 py-0.5 bg-slate-800 border border-slate-600 rounded text-[10px]">Ctrl + V</kbd></p>
           </div>
 
-          <!-- OPTIUNE LINK EXTERN IMAGINE -->
           <div class="flex gap-2 mt-2.5">
             <input
               id="externalImageUrlInput"
               type="url"
-              placeholder="Sau lipește un link direct de imagine (https://...)"
+              placeholder="Sau lipește un link de imagine (https://...)"
               class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
             />
             <button
@@ -251,12 +214,11 @@
               onclick="addExternalImageUrl()"
               class="bg-slate-700 hover:bg-slate-600 text-xs text-white px-3 py-1.5 rounded-lg transition"
             >
-              + Adaugă Link
+              + Link
             </button>
           </div>
 
-          <!-- PREVIEW GRID POZE ATASATE -->
-          <div id="modalImagePreviewGrid" class="grid grid-cols-3 sm:grid-cols-4 gap-2.5 mt-3"></div>
+          <div id="modalImagePreviewGrid" class="grid grid-cols-3 gap-2.5 mt-3"></div>
         </div>
 
         <div class="flex items-center justify-between pt-2 border-t border-slate-800">
@@ -266,14 +228,14 @@
             onclick="deleteCurrentTask()"
             class="hidden bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 px-3 py-2 rounded-lg text-xs font-medium transition"
           >
-            🗑️ Șterge Task
+            🗑️ Șterge
           </button>
           <div class="flex items-center gap-2 ml-auto">
             <button type="button" onclick="closeTaskModal()" class="px-4 py-2 rounded-lg text-xs sm:text-sm text-slate-300 hover:bg-slate-800 transition">
               Anulează
             </button>
             <button type="submit" class="bg-sky-600 hover:bg-sky-500 text-white font-medium px-5 py-2 rounded-lg text-xs sm:text-sm shadow-lg shadow-sky-600/20 transition">
-              Salvează Task
+              Salvează
             </button>
           </div>
         </div>
@@ -285,7 +247,7 @@
   <div id="lightboxModal" onclick="closeLightbox()" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex-col items-center justify-center p-4">
     <div class="max-w-5xl w-full flex flex-col items-center" onclick="event.stopPropagation()">
       <div class="w-full flex items-center justify-between mb-3 text-slate-300 text-xs sm:text-sm">
-        <span id="lightboxCaption" class="font-medium truncate">Screenshot Task</span>
+        <span id="lightboxCaption" class="font-medium truncate">Poză Task</span>
         <div class="flex items-center gap-3">
           <a id="lightboxDownloadLink" href="#" download="fivem-screenshot.jpg" class="bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-lg text-sky-400 transition">
             ⬇️ Descarcă
@@ -301,8 +263,8 @@
   <aside id="auditDrawer" class="fixed inset-y-0 right-0 w-full max-w-md bg-slate-900 border-l border-slate-800 shadow-2xl z-40 transform translate-x-full transition-transform duration-200 flex flex-col">
     <div class="p-4 border-b border-slate-800 flex items-center justify-between">
       <div>
-        <h2 class="font-bold text-base text-white flex items-center gap-2">📜 Audit Log Live</h2>
-        <p class="text-xs text-slate-400">Istoricul complet al modificărilor echipei</p>
+        <h2 class="font-bold text-base text-white flex items-center gap-2">📜 Istoric Activitate</h2>
+        <p class="text-xs text-slate-400">Cine și ce a modificat pe board</p>
       </div>
       <button onclick="toggleAuditDrawer()" class="text-slate-400 hover:text-white text-lg">✕</button>
     </div>
@@ -313,7 +275,7 @@
           id="auditSearchInput"
           type="text"
           oninput="renderAuditLogs()"
-          placeholder="Filtrează după membru sau task..."
+          placeholder="Caută după nume sau task..."
           class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500"
         />
         <select id="auditTypeFilter" onchange="renderAuditLogs()" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
@@ -336,7 +298,7 @@
           </button>
         </div>
         <button onclick="clearAuditLogs()" class="text-rose-400 hover:text-rose-300 underline">
-          Golește Log
+          Golește Istoric
         </button>
       </div>
     </div>
@@ -347,40 +309,33 @@
   <!-- MODAL NICKNAME -->
   <div id="nicknameModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-sm p-5 shadow-2xl">
-      <h3 class="font-bold text-base text-white mb-1">Identificare Membru Echipă</h3>
-      <p class="text-xs text-slate-400 mb-4">Numele tău va apărea pe task-urile preluate, la pozele încărcate și în Audit Log.</p>
+      <h3 class="font-bold text-base text-white mb-1">Cum te numești?</h3>
+      <p class="text-xs text-slate-400 mb-4">Numele tău va apărea când preiei un task sau lași un comentariu.</p>
       <input
         id="nicknameInput"
         type="text"
-        placeholder="Ex: clauzera / Andrei / Dev_Alex"
+        placeholder="Ex: clauzera / Andrei / Alex"
         class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white mb-4 focus:outline-none focus:border-sky-500"
       />
       <div class="flex justify-end gap-2">
         <button onclick="closeNicknameModal()" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white">Închide</button>
-        <button onclick="saveNickname()" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium px-4 py-1.5 rounded-lg">Salvează Nume</button>
+        <button onclick="saveNickname()" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium px-4 py-1.5 rounded-lg">Salvează</button>
       </div>
     </div>
   </div>
 
   <script>
     // ==================== CONFIGURARE & PAROLA ECHIPA ====================
-    const TEAM_PASSCODE = 'fivem2026'; // <-- Aici poți schimba parola echipei oricând
+    const TEAM_PASSCODE = 'fivem2026';
     const FIREBASE_BASE_URL = 'https://fivem-board-default-rtdb.europe-west1.firebasedatabase.app';
 
     const COLUMNS = [
-      { id: 'todo', title: '📋 De Făcut (To-Do)', accent: 'border-slate-600' },
+      { id: 'todo', title: '📋 De Făcut', accent: 'border-slate-600' },
       { id: 'inprogress', title: '⚙️ În Lucru', accent: 'border-sky-500' },
-      { id: 'testing', title: '🧪 De Testat (QA)', accent: 'border-amber-500' },
-      { id: 'bugs', title: '🐛 Bug-uri Găsite', accent: 'border-rose-500' },
-      { id: 'done', title: '✅ Finalizat (Done)', accent: 'border-emerald-500' }
+      { id: 'testing', title: '🧪 De Testat', accent: 'border-amber-500' },
+      { id: 'bugs', title: '🐛 Bug-uri', accent: 'border-rose-500' },
+      { id: 'done', title: '✅ Finalizat', accent: 'border-emerald-500' }
     ];
-
-    const PRIORITY_BADGES = {
-      low: { label: 'Scăzută', cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
-      medium: { label: 'Medie', cls: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
-      high: { label: 'Ridicată', cls: 'bg-orange-500/15 text-orange-300 border-orange-500/30' },
-      critical: { label: 'Critică', cls: 'bg-rose-500/15 text-rose-300 border-rose-500/30' }
-    };
 
     const MAX_IMAGES_PER_TASK = 6;
     let currentUser = localStorage.getItem('fivem_hub_user') || '';
@@ -418,7 +373,6 @@
       setupDropzoneAndPaste();
 
       document.getElementById('searchInput').addEventListener('input', renderBoard);
-      document.getElementById('categoryFilter').addEventListener('change', renderBoard);
 
       await initFirebaseSync();
 
@@ -434,7 +388,7 @@
     }
 
     function getActorName() {
-      return currentUser && currentUser.trim() ? currentUser.trim() : 'Membru_Anonim';
+      return currentUser && currentUser.trim() ? currentUser.trim() : 'Membru';
     }
 
     function updateUserLabel() {
@@ -469,15 +423,15 @@
             id: 'log_' + Date.now(),
             type: 'CREATE',
             actor: 'Sistem',
-            taskTitle: 'Inițializare FiveM Dev & QA Hub',
-            details: 'Board securizat conectat la Firebase Realtime Database',
+            taskTitle: 'FiveM Board',
+            details: 'Board pornit și conectat live',
             timestamp: new Date().toISOString()
           }];
           await saveLogsState();
         }
 
         isInitialized = true;
-        statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Live Sync Activ`;
+        statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Live`;
         statusEl.className = 'inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
 
         renderBoard();
@@ -487,7 +441,7 @@
         pollInterval = setInterval(fetchFromFirebase, 3500);
       } catch (err) {
         console.error('Eroare conectare Firebase:', err);
-        statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Eroare Conexiune DB`;
+        statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Offline`;
         statusEl.className = 'inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30';
       }
     }
@@ -544,12 +498,10 @@
       return [
         {
           id: 't_1',
-          title: 'Testare anti-duplicare inventar & portbagaj',
+          title: 'Testare inventar & portbagaj (anti-duplicare)',
           column: 'testing',
-          category: 'Securitate & Anticheat',
-          priority: 'critical',
-          description: 'Verifică drop/pickup simultan între 2 jucători și deconectare forțată (quit) în timpul transferului din stash.',
-          qaNotes: 'Atașați screenshot din consola F8 dacă apare orice warning.',
+          description: 'Verifică drop/pickup simultan între 2 jucători și deconectare în timpul transferului.',
+          qaNotes: 'Puneți poză dacă apare vreo eroare în F8.',
           assignee: '',
           createdBy: 'Admin',
           updatedAt: new Date().toISOString(),
@@ -557,11 +509,9 @@
         },
         {
           id: 't_2',
-          title: 'Verificare consum resmon (idle & în zonă aglomerată)',
+          title: 'Verificare consum resmon pe server',
           column: 'todo',
-          category: 'UI & Optimizare',
-          priority: 'high',
-          description: 'Niciun script nu trebuie să depășească 0.05 - 0.10 ms în idle. Atașați poză cu resmon 1 la fiecare test.',
+          description: 'Verifică să nu fie scripturi cu consum mare în zonele aglomerate.',
           qaNotes: '',
           assignee: '',
           createdBy: 'Admin',
@@ -570,11 +520,9 @@
         },
         {
           id: 't_3',
-          title: 'Configurare garaje și armurerii Poliție / SMURD',
+          title: 'Configurare garaje Poliție / SMURD',
           column: 'inprogress',
-          category: 'Facțiuni',
-          priority: 'medium',
-          description: 'Setare grade, permisiuni boss menu și spawn puncte elicopter.',
+          description: 'Setare grade, permisiuni și puncte de spawn.',
           qaNotes: '',
           assignee: '',
           createdBy: 'Admin',
@@ -756,7 +704,7 @@
     // ==================== LIGHTBOX ====================
     function openLightbox(url, caption = '') {
       document.getElementById('lightboxImg').src = url;
-      document.getElementById('lightboxCaption').textContent = caption || 'Screenshot Task FiveM';
+      document.getElementById('lightboxCaption').textContent = caption || 'Poză Task';
       document.getElementById('lightboxDownloadLink').href = url;
       const lb = document.getElementById('lightboxModal');
       lb.classList.remove('hidden');
@@ -770,20 +718,19 @@
       document.getElementById('lightboxImg').src = '';
     }
 
-    // ==================== RENDER KANBAN BOARD ====================
+    // ==================== RENDER KANBAN BOARD (SIMPLIFICAT) ====================
     function renderBoard() {
       const container = document.getElementById('boardContainer');
       const query = document.getElementById('searchInput').value.toLowerCase().trim();
-      const catFilter = document.getElementById('categoryFilter').value;
 
       const filtered = tasks.filter(t => {
-        const matchesCat = catFilter === 'ALL' || t.category === catFilter;
-        const matchesQuery = !query ||
+        if (!query) return true;
+        return (
           t.title.toLowerCase().includes(query) ||
           (t.description && t.description.toLowerCase().includes(query)) ||
           (t.assignee && t.assignee.toLowerCase().includes(query)) ||
-          (t.qaNotes && t.qaNotes.toLowerCase().includes(query));
-        return matchesCat && matchesQuery;
+          (t.qaNotes && t.qaNotes.toLowerCase().includes(query))
+        );
       });
 
       container.innerHTML = COLUMNS.map((col, colIndex) => {
@@ -791,7 +738,7 @@
 
         return `
           <section
-            class="bg-slate-900/70 border border-slate-800 rounded-xl flex flex-col max-h-[calc(100vh-115px)] transition"
+            class="bg-slate-900/70 border border-slate-800 rounded-xl flex flex-col max-h-[calc(100vh-105px)] transition"
             ondragover="event.preventDefault(); this.classList.add('drag-over')"
             ondragleave="this.classList.remove('drag-over')"
             ondrop="handleDrop(event, '${col.id}', this)"
@@ -811,7 +758,6 @@
     }
 
     function renderTaskCard(task, colIndex) {
-      const prio = PRIORITY_BADGES[task.priority] || PRIORITY_BADGES.medium;
       const imgs = Array.isArray(task.images) ? task.images : [];
       const isMine = task.assignee && task.assignee === getActorName();
 
@@ -819,40 +765,34 @@
         <article
           draggable="true"
           ondragstart="handleDragStart(event, '${task.id}')"
-          class="bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 rounded-lg p-3 shadow-sm transition group cursor-grab active:cursor-grabbing"
+          class="bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 rounded-xl p-3.5 shadow-sm transition group cursor-grab active:cursor-grabbing"
         >
-          <!-- TOP TAGS -->
-          <div class="flex items-center justify-between gap-1.5 mb-1.5">
-            <span class="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-700/80 text-sky-300 truncate">
-              ${escapeHtml(task.category)}
-            </span>
-            <div class="flex items-center gap-1">
-              ${imgs.length > 0 ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-medium">🖼️ ${imgs.length}</span>` : ''}
-              <span class="text-[10px] font-medium px-2 py-0.5 rounded border ${prio.cls}">
-                ${prio.label}
+          <!-- TITLE + IMAGE BADGE -->
+          <div class="flex items-start justify-between gap-2 mb-1.5">
+            <h4
+              onclick="openTaskModal('${task.id}')"
+              class="font-semibold text-sm text-white hover:text-sky-400 cursor-pointer leading-snug"
+            >
+              ${escapeHtml(task.title)}
+            </h4>
+            ${imgs.length > 0 ? `
+              <span class="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-medium">
+                🖼️ ${imgs.length}
               </span>
-            </div>
+            ` : ''}
           </div>
 
-          <!-- TITLE -->
-          <h4
-            onclick="openTaskModal('${task.id}')"
-            class="font-semibold text-xs sm:text-sm text-white hover:text-sky-400 cursor-pointer leading-snug mb-1.5"
-          >
-            ${escapeHtml(task.title)}
-          </h4>
-
           <!-- DESCRIPTION -->
-          ${task.description ? `<p class="text-xs text-slate-400 line-clamp-2 mb-2">${escapeHtml(task.description)}</p>` : ''}
+          ${task.description ? `<p class="text-xs text-slate-400 line-clamp-3 mb-2.5 leading-relaxed">${escapeHtml(task.description)}</p>` : ''}
 
           <!-- THUMBNAIL GALLERY PREVIEW PE CARD -->
           ${imgs.length > 0 ? `
             <div class="grid ${imgs.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-1.5 mb-2.5">
               ${imgs.slice(0, 2).map((img, i) => `
-                <div class="relative rounded overflow-hidden border border-slate-700 bg-slate-950 h-20 group/img">
+                <div class="relative rounded-lg overflow-hidden border border-slate-700 bg-slate-950 h-24 group/img">
                   <img
                     src="${img.url}"
-                    alt="Screenshot"
+                    alt="Poză"
                     onclick="openLightbox('${img.url}', '${escapeHtml(task.title)} — atașat de ${escapeHtml(img.addedBy)}')"
                     class="w-full h-full object-cover cursor-zoom-in hover:opacity-90 transition"
                   />
@@ -869,10 +809,10 @@
             </div>
           ` : ''}
 
-          <!-- QA NOTES -->
+          <!-- COMENTARIU / NOTITA -->
           ${task.qaNotes ? `
-            <div class="bg-amber-500/10 border border-amber-500/20 rounded px-2 py-1 text-[11px] text-amber-200 mb-2">
-              <strong>QA:</strong> ${escapeHtml(task.qaNotes)}
+            <div class="bg-amber-500/10 border border-amber-500/20 rounded-lg px-2.5 py-1.5 text-xs text-amber-200 mb-2.5">
+              <strong>💬 Notiță:</strong> ${escapeHtml(task.qaNotes)}
             </div>
           ` : ''}
 
@@ -880,9 +820,9 @@
           <div class="flex items-center justify-between pt-2 border-t border-slate-700/60 gap-1">
             <button
               onclick="toggleClaimTask('${task.id}')"
-              class="text-[11px] px-2 py-0.5 rounded transition truncate max-w-[140px] ${
+              class="text-xs px-2.5 py-1 rounded-md transition truncate max-w-[150px] ${
                 task.assignee
-                  ? (isMine ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30' : 'bg-slate-700 text-slate-200')
+                  ? (isMine ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30 font-medium' : 'bg-slate-700 text-slate-200')
                   : 'bg-slate-700/50 hover:bg-sky-600/30 text-slate-400 hover:text-sky-300'
               }"
               title="Preia sau eliberează acest task"
@@ -895,19 +835,19 @@
                 <button
                   onclick="moveTaskByStep('${task.id}', -1)"
                   title="Mută la stânga"
-                  class="px-1.5 py-0.5 rounded bg-slate-700/70 hover:bg-slate-600 text-[11px] text-slate-300"
+                  class="px-2 py-1 rounded-md bg-slate-700/70 hover:bg-slate-600 text-xs text-slate-300"
                 >◀</button>
               ` : ''}
               <button
                 onclick="openTaskModal('${task.id}')"
-                title="Editează / Adaugă poze"
-                class="px-1.5 py-0.5 rounded bg-slate-700/70 hover:bg-slate-600 text-[11px] text-slate-300"
+                title="Editează / Comentariu / Poze"
+                class="px-2 py-1 rounded-md bg-slate-700/70 hover:bg-slate-600 text-xs text-slate-300"
               >✏️</button>
               ${colIndex < COLUMNS.length - 1 ? `
                 <button
                   onclick="moveTaskByStep('${task.id}', 1)"
                   title="Mută la dreapta"
-                  class="px-1.5 py-0.5 rounded bg-slate-700/70 hover:bg-slate-600 text-[11px] text-slate-300"
+                  class="px-2 py-1 rounded-md bg-slate-700/70 hover:bg-slate-600 text-xs text-slate-300"
                 >▶</button>
               ` : ''}
             </div>
@@ -985,18 +925,16 @@
       if (taskId) {
         const task = tasks.find(t => t.id === taskId);
         if (!task) return;
-        document.getElementById('taskModalTitle').textContent = 'Editează Task & Atașamente';
+        document.getElementById('taskModalTitle').textContent = 'Editează Task';
         document.getElementById('taskId').value = task.id;
         document.getElementById('taskTitle').value = task.title;
         document.getElementById('taskColumn').value = task.column;
-        document.getElementById('taskCategory').value = task.category;
-        document.getElementById('taskPriority').value = task.priority;
         document.getElementById('taskDescription').value = task.description || '';
         document.getElementById('taskQaNotes').value = task.qaNotes || '';
         modalDraftImages = Array.isArray(task.images) ? JSON.parse(JSON.stringify(task.images)) : [];
         deleteBtn.classList.remove('hidden');
       } else {
-        document.getElementById('taskModalTitle').textContent = 'Adaugă Task / Bug Nou';
+        document.getElementById('taskModalTitle').textContent = 'Adaugă Task Nou';
         document.getElementById('taskForm').reset();
         document.getElementById('taskId').value = '';
         modalDraftImages = [];
@@ -1019,8 +957,6 @@
       const id = document.getElementById('taskId').value;
       const title = document.getElementById('taskTitle').value.trim();
       const column = document.getElementById('taskColumn').value;
-      const category = document.getElementById('taskCategory').value;
-      const priority = document.getElementById('taskPriority').value;
       const description = document.getElementById('taskDescription').value.trim();
       const qaNotes = document.getElementById('taskQaNotes').value.trim();
 
@@ -1035,8 +971,6 @@
 
         task.title = title;
         task.column = column;
-        task.category = category;
-        task.priority = priority;
         task.description = description;
         task.qaNotes = qaNotes;
         task.images = modalDraftImages;
@@ -1047,15 +981,13 @@
         } else if (newImgCount < oldImgCount) {
           logAudit('IMAGE', title, `A șters ${oldImgCount - newImgCount} poze (rămase: ${newImgCount})`);
         } else {
-          logAudit('EDIT', title, `Actualizat detalii / note QA`);
+          logAudit('EDIT', title, `A actualizat task-ul / comentariul`);
         }
       } else {
         const newTask = {
           id: 't_' + Date.now(),
           title,
           column,
-          category,
-          priority,
           description,
           qaNotes,
           assignee: '',
@@ -1065,7 +997,7 @@
         };
         tasks.unshift(newTask);
         const colName = COLUMNS.find(c => c.id === column)?.title || column;
-        const imgNote = modalDraftImages.length > 0 ? ` cu ${modalDraftImages.length} poze atașate` : '';
+        const imgNote = modalDraftImages.length > 0 ? ` cu ${modalDraftImages.length} poze` : '';
         logAudit('CREATE', title, `Creat în "${colName}"${imgNote}`);
       }
 
@@ -1079,11 +1011,11 @@
       const task = tasks.find(t => t.id === id);
       if (!task) return;
 
-      if (confirm(`Sigur vrei să ștergi task-ul "${task.title}"?`)) {
+      if (confirm(`Sigur vrei să ștergi "${task.title}"?`)) {
         tasks = tasks.filter(t => t.id !== id);
         saveTasksState();
         renderBoard();
-        logAudit('DELETE', task.title, 'Task șters definitiv');
+        logAudit('DELETE', task.title, 'Task șters');
         closeTaskModal();
       }
     }
@@ -1143,17 +1075,17 @@
         const dt = new Date(l.timestamp).toLocaleString('ro-RO');
         return `[${dt}] [${l.type}] ${l.actor} -> "${l.taskTitle}": ${l.details}`;
       }).join('\n');
-      downloadFile('fivem-audit-log.txt', lines, 'text/plain');
+      downloadFile('fivem-istoric.txt', lines, 'text/plain');
     }
 
     function exportAuditJson() {
-      downloadFile('fivem-audit-log.json', JSON.stringify(auditLogs, null, 2), 'application/json');
+      downloadFile('fivem-istoric.json', JSON.stringify(auditLogs, null, 2), 'application/json');
     }
 
     function clearAuditLogs() {
-      if (!confirm('Sigur vrei să golești tot istoricul Audit Log?')) return;
+      if (!confirm('Sigur vrei să golești tot istoricul?')) return;
       auditLogs = [];
-      logAudit('DELETE', 'Audit Log', 'Istoricul a fost curățat manual');
+      logAudit('DELETE', 'Istoric', 'Istoricul a fost curățat');
     }
 
     function downloadFile(filename, content, mime) {

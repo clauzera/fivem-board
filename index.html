@@ -68,7 +68,7 @@
         <input
           id="searchInput"
           type="text"
-          placeholder="Caută task sau nume..."
+          placeholder="Caută task, notiță sau nume..."
           class="bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:border-sky-500 w-44 sm:w-60"
         />
 
@@ -115,7 +115,7 @@
     </div>
   </main>
 
-  <!-- MODAL VIZUALIZARE COMPLETA TASK (CITIRE COMODA DESCRIERE LUNGA & POZE) -->
+  <!-- MODAL VIZUALIZARE COMPLETA TASK + SECTIUNE NOTITE -->
   <div id="viewTaskModal" onclick="closeViewModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 hidden items-center justify-center p-4">
     <div onclick="event.stopPropagation()" class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
       <div class="px-6 py-4 border-b border-slate-800 flex items-start justify-between gap-3 sticky top-0 bg-slate-900 z-10">
@@ -127,16 +127,43 @@
       </div>
 
       <div class="p-6 space-y-5 text-sm">
+        <!-- DESCRIERE -->
         <div>
           <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Descriere</h3>
-          <div id="viewTaskDescription" class="bg-slate-800/60 border border-slate-700/70 rounded-xl p-4 text-slate-200 whitespace-pre-wrap leading-relaxed text-sm min-h-[80px]"></div>
+          <div id="viewTaskDescription" class="bg-slate-800/60 border border-slate-700/70 rounded-xl p-4 text-slate-200 whitespace-pre-wrap leading-relaxed text-sm min-h-[70px]"></div>
         </div>
 
-        <div id="viewTaskNotesSection" class="hidden">
-          <h3 class="text-xs font-semibold uppercase tracking-wider text-amber-400 mb-2">💬 Comentariu / Notiță</h3>
-          <div id="viewTaskNotes" class="bg-amber-500/10 border border-amber-500/25 rounded-xl p-4 text-amber-100 whitespace-pre-wrap leading-relaxed text-sm"></div>
+        <!-- SECTIUNE NOTITE / COMENTARII (VIZIBILA MEREU + ADAUGARE RAPIDA) -->
+        <div class="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-amber-400">💬 Notițe & Comentarii</h3>
+            <span id="viewNotesCounter" class="text-[11px] text-slate-400">0 notițe</span>
+          </div>
+
+          <!-- Notița principală (dacă există din editare) -->
+          <div id="viewMainNoteBox" class="hidden bg-amber-500/10 border border-amber-500/25 rounded-lg p-3 text-amber-100 whitespace-pre-wrap text-xs sm:text-sm"></div>
+
+          <!-- Lista de notițe adăugate de echipă -->
+          <div id="viewNotesList" class="space-y-2 max-h-52 overflow-y-auto"></div>
+
+          <!-- Formular rapid de adăugare notiță nouă -->
+          <form id="quickNoteForm" class="flex gap-2 pt-1">
+            <input
+              id="quickNoteInput"
+              type="text"
+              placeholder="Scrie o notiță nouă (ex: Am testat, merge ok)..."
+              class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+            />
+            <button
+              type="submit"
+              class="bg-amber-600 hover:bg-amber-500 text-white font-medium px-3.5 py-2 rounded-lg text-xs sm:text-sm transition shrink-0"
+            >
+              + Notiță
+            </button>
+          </form>
         </div>
 
+        <!-- POZE ATASATE -->
         <div id="viewTaskImagesSection" class="hidden">
           <h3 class="text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-2">🖼️ Poze atașate (click pentru mărire)</h3>
           <div id="viewTaskImagesGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
@@ -157,7 +184,7 @@
     </div>
   </div>
 
-  <!-- MODAL ADAUGARE / EDITARE TASK (DESCRIERE MARE & AERISITA) -->
+  <!-- MODAL ADAUGARE / EDITARE TASK -->
   <div id="taskModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-40 hidden items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl">
       <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800 sticky top-0 bg-slate-900 z-10">
@@ -207,12 +234,12 @@
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Comentariu / Notiță</label>
+          <label class="block text-xs font-medium text-amber-300 mb-1">💬 Notiță Principală / Observație</label>
           <textarea
             id="taskQaNotes"
             rows="3"
-            placeholder="Scrie aici un update, o observație sau rezultatul testării..."
-            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white leading-relaxed focus:outline-none focus:border-sky-500 resize-y"
+            placeholder="Scrie aici o notiță fixată pe card (update, status testare, observație)..."
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white leading-relaxed focus:outline-none focus:border-amber-500 resize-y"
           ></textarea>
         </div>
 
@@ -323,6 +350,7 @@
           <option value="CREATE">Creare</option>
           <option value="MOVE">Mutare</option>
           <option value="CLAIM">Preluare</option>
+          <option value="NOTE">Notițe</option>
           <option value="IMAGE">Poze</option>
           <option value="EDIT">Editare</option>
           <option value="DELETE">Ștergere</option>
@@ -350,7 +378,7 @@
   <div id="nicknameModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-sm p-5 shadow-2xl">
       <h3 class="font-bold text-base text-white mb-1">Cum te numești?</h3>
-      <p class="text-xs text-slate-400 mb-4">Numele tău va apărea când preiei un task sau lași un comentariu.</p>
+      <p class="text-xs text-slate-400 mb-4">Numele tău va apărea când preiei un task sau lași o notiță.</p>
       <input
         id="nicknameInput"
         type="text"
@@ -382,6 +410,7 @@
     let tasks = [];
     let auditLogs = [];
     let modalDraftImages = [];
+    let activeViewingTaskId = null;
     let pollInterval = null;
     let isInitialized = false;
     let lastTasksSnapshot = '';
@@ -406,6 +435,33 @@
           document.getElementById('teamPasswordInput').value = '';
           document.getElementById('teamPasswordInput').focus();
         }
+      });
+
+      // Formular adăugare notiță rapidă în modalul de vizualizare
+      document.getElementById('quickNoteForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!activeViewingTaskId) return;
+        const input = document.getElementById('quickNoteInput');
+        const text = input.value.trim();
+        if (!text) return;
+
+        const task = tasks.find(t => t.id === activeViewingTaskId);
+        if (!task) return;
+
+        if (!Array.isArray(task.notes)) task.notes = [];
+        task.notes.push({
+          id: 'n_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+          author: getActorName(),
+          text,
+          createdAt: new Date().toISOString()
+        });
+        task.updatedAt = new Date().toISOString();
+
+        input.value = '';
+        saveTasksState();
+        renderBoard(false);
+        renderViewModalNotes(task);
+        logAudit('NOTE', task.title, `Notiță nouă: "${text.slice(0, 70)}${text.length > 70 ? '...' : ''}"`);
       });
     });
 
@@ -437,7 +493,7 @@
       document.getElementById('currentUserLabel').textContent = currentUser || 'Setează Nume';
     }
 
-    // ==================== FIREBASE REALTIME DATABASE SYNC (FARA SCROLL JUMP) ====================
+    // ==================== FIREBASE REALTIME DATABASE SYNC ====================
     async function initFirebaseSync() {
       const statusEl = document.getElementById('syncStatus');
       try {
@@ -503,11 +559,16 @@
 
         if (Array.isArray(remoteTasks)) {
           const incomingTasksStr = JSON.stringify(remoteTasks);
-          // Re-randăm DOAR dacă există modificări reale și păstrăm poziția de scroll!
           if (incomingTasksStr !== lastTasksSnapshot) {
             tasks = remoteTasks;
             lastTasksSnapshot = incomingTasksStr;
             renderBoard(false);
+
+            // Actualizează și notițele dacă modalul de vizualizare este deschis
+            if (activeViewingTaskId && !document.getElementById('viewTaskModal').classList.contains('hidden')) {
+              const currentTask = tasks.find(t => t.id === activeViewingTaskId);
+              if (currentTask) renderViewModalNotes(currentTask);
+            }
           }
         }
 
@@ -559,6 +620,7 @@
           column: 'testing',
           description: 'Verifică drop/pickup simultan între 2 jucători și deconectare în timpul transferului.',
           qaNotes: 'Puneți poză dacă apare vreo eroare în F8.',
+          notes: [],
           assignee: '',
           createdBy: 'Admin',
           updatedAt: new Date().toISOString(),
@@ -736,23 +798,18 @@
       `).join('');
     }
 
-    // ==================== MODAL VIZUALIZARE COMPLETA TASK ====================
+    // ==================== MODAL VIZUALIZARE COMPLETA + NOTITE ====================
     function openViewModal(taskId) {
       const task = tasks.find(t => t.id === taskId);
       if (!task) return;
+      activeViewingTaskId = task.id;
 
       const colObj = COLUMNS.find(c => c.id === task.column);
       document.getElementById('viewTaskColBadge').textContent = colObj ? colObj.title : task.column;
       document.getElementById('viewTaskTitle').textContent = task.title;
       document.getElementById('viewTaskDescription').textContent = task.description || 'Fără descriere adăugată.';
 
-      const notesSec = document.getElementById('viewTaskNotesSection');
-      if (task.qaNotes && task.qaNotes.trim()) {
-        document.getElementById('viewTaskNotes').textContent = task.qaNotes;
-        notesSec.classList.remove('hidden');
-      } else {
-        notesSec.classList.add('hidden');
-      }
+      renderViewModalNotes(task);
 
       const imgs = Array.isArray(task.images) ? task.images : [];
       const imgSec = document.getElementById('viewTaskImagesSection');
@@ -787,7 +844,60 @@
       vm.classList.add('flex');
     }
 
+    function renderViewModalNotes(task) {
+      const mainBox = document.getElementById('viewMainNoteBox');
+      if (task.qaNotes && task.qaNotes.trim()) {
+        mainBox.innerHTML = `<strong class="text-amber-300">📌 Notiță principală:</strong> ${escapeHtml(task.qaNotes)}`;
+        mainBox.classList.remove('hidden');
+      } else {
+        mainBox.classList.add('hidden');
+      }
+
+      const notes = Array.isArray(task.notes) ? task.notes : [];
+      const totalCount = notes.length + (task.qaNotes && task.qaNotes.trim() ? 1 : 0);
+      document.getElementById('viewNotesCounter').textContent = `${totalCount} ${totalCount === 1 ? 'notiță' : 'notițe'}`;
+
+      const listEl = document.getElementById('viewNotesList');
+      if (!notes.length && !(task.qaNotes && task.qaNotes.trim())) {
+        listEl.innerHTML = `<p class="text-xs text-slate-500 italic">Nicio notiță încă. Scrie una mai jos.</p>`;
+        return;
+      }
+
+      listEl.innerHTML = notes.map(n => {
+        const dt = new Date(n.createdAt);
+        const timeStr = dt.toLocaleDateString('ro-RO') + ' ' + dt.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
+        return `
+          <div class="bg-slate-900/90 border border-slate-700/80 rounded-lg px-3 py-2 text-xs">
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <span class="font-semibold text-sky-400">👤 ${escapeHtml(n.author)}</span>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] text-slate-500">${timeStr}</span>
+                <button
+                  type="button"
+                  onclick="deleteTaskNote('${task.id}', '${n.id}')"
+                  title="Șterge notița"
+                  class="text-slate-500 hover:text-rose-400 text-[11px]"
+                >✕</button>
+              </div>
+            </div>
+            <p class="text-slate-200 whitespace-pre-wrap leading-relaxed">${escapeHtml(n.text)}</p>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function deleteTaskNote(taskId, noteId) {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task || !Array.isArray(task.notes)) return;
+      task.notes = task.notes.filter(n => n.id !== noteId);
+      task.updatedAt = new Date().toISOString();
+      saveTasksState();
+      renderBoard(false);
+      renderViewModalNotes(task);
+    }
+
     function closeViewModal() {
+      activeViewingTaskId = null;
       const vm = document.getElementById('viewTaskModal');
       vm.classList.add('hidden');
       vm.classList.remove('flex');
@@ -810,12 +920,11 @@
       document.getElementById('lightboxImg').src = '';
     }
 
-    // ==================== RENDER KANBAN BOARD (CU PASTRARE POZITIE SCROLL) ====================
+    // ==================== RENDER KANBAN BOARD ====================
     function renderBoard(resetScroll = false) {
       const container = document.getElementById('boardContainer');
       const query = document.getElementById('searchInput').value.toLowerCase().trim();
 
-      // Salvăm poziția curentă a scrollbar-ului pentru fiecare coloană înainte de re-randare
       const savedScrolls = {};
       if (!resetScroll) {
         COLUMNS.forEach(col => {
@@ -826,11 +935,13 @@
 
       const filtered = tasks.filter(t => {
         if (!query) return true;
+        const notesMatch = Array.isArray(t.notes) && t.notes.some(n => n.text.toLowerCase().includes(query) || n.author.toLowerCase().includes(query));
         return (
           t.title.toLowerCase().includes(query) ||
           (t.description && t.description.toLowerCase().includes(query)) ||
           (t.assignee && t.assignee.toLowerCase().includes(query)) ||
-          (t.qaNotes && t.qaNotes.toLowerCase().includes(query))
+          (t.qaNotes && t.qaNotes.toLowerCase().includes(query)) ||
+          notesMatch
         );
       });
 
@@ -857,7 +968,6 @@
         `;
       }).join('');
 
-      // Restaurăm exact poziția unde derulase utilizatorul
       if (!resetScroll) {
         COLUMNS.forEach(col => {
           const listEl = document.getElementById(`col-scroll-${col.id}`);
@@ -870,6 +980,8 @@
 
     function renderTaskCard(task, colIndex) {
       const imgs = Array.isArray(task.images) ? task.images : [];
+      const extraNotes = Array.isArray(task.notes) ? task.notes : [];
+      const lastExtraNote = extraNotes.length > 0 ? extraNotes[extraNotes.length - 1] : null;
       const isMine = task.assignee && task.assignee === getActorName();
       const hasLongDesc = task.description && (task.description.length > 130 || task.description.includes('\n'));
 
@@ -879,7 +991,7 @@
           ondragstart="handleDragStart(event, '${task.id}')"
           class="bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 rounded-xl p-3.5 shadow-sm transition group cursor-grab active:cursor-grabbing"
         >
-          <!-- TITLE + IMAGE BADGE -->
+          <!-- TITLE + BADGES -->
           <div class="flex items-start justify-between gap-2 mb-1.5">
             <h4
               onclick="openViewModal('${task.id}')"
@@ -887,11 +999,18 @@
             >
               ${escapeHtml(task.title)}
             </h4>
-            ${imgs.length > 0 ? `
-              <span class="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-medium">
-                🖼️ ${imgs.length}
-              </span>
-            ` : ''}
+            <div class="flex items-center gap-1 shrink-0">
+              ${extraNotes.length > 0 ? `
+                <span onclick="openViewModal('${task.id}')" class="cursor-pointer text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-medium">
+                  💬 ${extraNotes.length}
+                </span>
+              ` : ''}
+              ${imgs.length > 0 ? `
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-medium">
+                  🖼️ ${imgs.length}
+                </span>
+              ` : ''}
+            </div>
           </div>
 
           <!-- DESCRIPTION CU BUTON CITEȘTE TOT -->
@@ -936,18 +1055,22 @@
             </div>
           ` : ''}
 
-          <!-- COMENTARIU / NOTITA -->
+          <!-- NOTITA PRINCIPALA SAU ULTIMA NOTITA ADAUGATA -->
           ${task.qaNotes ? `
             <div onclick="openViewModal('${task.id}')" class="bg-amber-500/10 border border-amber-500/20 rounded-lg px-2.5 py-1.5 text-xs text-amber-200 mb-2.5 cursor-pointer line-clamp-2">
               <strong>💬 Notiță:</strong> ${escapeHtml(task.qaNotes)}
             </div>
-          ` : ''}
+          ` : (lastExtraNote ? `
+            <div onclick="openViewModal('${task.id}')" class="bg-amber-500/10 border border-amber-500/20 rounded-lg px-2.5 py-1.5 text-xs text-amber-200 mb-2.5 cursor-pointer line-clamp-2">
+              <strong>💬 ${escapeHtml(lastExtraNote.author)}:</strong> ${escapeHtml(lastExtraNote.text)}
+            </div>
+          ` : '')}
 
-          <!-- FOOTER: ASSIGNEE + QUICK MOVE -->
+          <!-- FOOTER: ASSIGNEE + QUICK ACTIONS -->
           <div class="flex items-center justify-between pt-2 border-t border-slate-700/60 gap-1">
             <button
               onclick="toggleClaimTask('${task.id}')"
-              class="text-xs px-2.5 py-1 rounded-md transition truncate max-w-[140px] ${
+              class="text-xs px-2.5 py-1 rounded-md transition truncate max-w-[130px] ${
                 task.assignee
                   ? (isMine ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30 font-medium' : 'bg-slate-700 text-slate-200')
                   : 'bg-slate-700/50 hover:bg-sky-600/30 text-slate-400 hover:text-sky-300'
@@ -966,8 +1089,13 @@
                 >◀</button>
               ` : ''}
               <button
+                onclick="openViewModal('${task.id}')"
+                title="Adaugă notiță / Vezi detalii"
+                class="px-2 py-1 rounded-md bg-amber-500/15 hover:bg-amber-500/25 text-xs text-amber-300"
+              >💬</button>
+              <button
                 onclick="openTaskModal('${task.id}')"
-                title="Editează / Comentariu / Poze"
+                title="Editează task"
                 class="px-2 py-1 rounded-md bg-slate-700/70 hover:bg-slate-600 text-xs text-slate-300"
               >✏️</button>
               ${colIndex < COLUMNS.length - 1 ? `
@@ -1110,7 +1238,7 @@
         } else if (newImgCount < oldImgCount) {
           logAudit('IMAGE', title, `A șters ${oldImgCount - newImgCount} poze (rămase: ${newImgCount})`);
         } else {
-          logAudit('EDIT', title, `A actualizat task-ul / comentariul`);
+          logAudit('EDIT', title, `A actualizat task-ul / notița`);
         }
       } else {
         const newTask = {
@@ -1119,6 +1247,7 @@
           column,
           description,
           qaNotes,
+          notes: [],
           assignee: '',
           createdBy: getActorName(),
           updatedAt: new Date().toISOString(),
@@ -1175,8 +1304,9 @@
         CREATE: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
         MOVE: 'border-sky-500/40 bg-sky-500/10 text-sky-300',
         CLAIM: 'border-indigo-500/40 bg-indigo-500/10 text-indigo-300',
+        NOTE: 'border-amber-500/40 bg-amber-500/10 text-amber-300',
         IMAGE: 'border-purple-500/40 bg-purple-500/10 text-purple-300',
-        EDIT: 'border-amber-500/40 bg-amber-500/10 text-amber-300',
+        EDIT: 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300',
         DELETE: 'border-rose-500/40 bg-rose-500/10 text-rose-300'
       };
 

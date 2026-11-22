@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="ro" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FiveM Dev & QA Hub — Live Board + Audit Log + Poze</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    .drag-over { border: 2px dashed #38bdf8 !important; background-color: rgba(56, 189, 248, 0.08) !important; }
+    .img-drop-active { border-color: #38bdf8 !important; background-color: rgba(56, 189, 248, 0.12) !important; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-sky-500 selection:text-white">
+
+  <!-- TOP NAVBAR -->
+  <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-30 px-4 py-3">
+    <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-sky-500/20">
+          5M
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-base sm:text-lg tracking-tight text-white">FiveM Dev & QA Hub</h1>
+            <span id="syncStatus" class="inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Live Sync
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">Board colaborativ pentru echipă • Suport Screenshot-uri (Paste / Upload) & Audit Log</p>
+        </div>
+      </div>
+
+      <!-- FILTRE & ACTIUNI -->
+      <div class="flex flex-wrap items-center gap-2">
+        <input
+          id="searchInput"
+          type="text"
+          placeholder="Caută task, script, autor..."
+          class="bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:border-sky-500 w-40 sm:w-52"
+        />
+
+        <select
+          id="categoryFilter"
+          class="bg-slate-800/80 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-sky-500"
+        >
+          <option value="ALL">Toate categoriile</option>
+          <option value="Infrastructură">Infrastructură</option>
+          <option value="Gameplay & Joburi">Gameplay & Joburi</option>
+          <option value="Facțiuni">Facțiuni</option>
+          <option value="UI & Optimizare">UI & Optimizare</option>
+          <option value="Securitate & Anticheat">Securitate & Anticheat</option>
+        </select>
+
+        <!-- NICKNAME BADGE -->
+        <button
+          id="nicknameBtn"
+          onclick="openNicknameModal()"
+          title="Schimbă numele tău afișat în echipă"
+          class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg text-xs sm:text-sm transition"
+        >
+          <span class="text-sky-400">👤</span>
+          <span id="currentUserLabel" class="font-medium text-slate-200">Setează Nume</span>
+        </button>
+
+        <!-- AUDIT LOG BUTTON -->
+        <button
+          onclick="toggleAuditDrawer()"
+          class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg text-xs sm:text-sm text-amber-300 transition"
+        >
+          <span>📜 Audit Log</span>
+          <span id="auditCountBadge" class="bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded text-[11px] font-semibold">0</span>
+        </button>
+
+        <!-- ADD TASK BUTTON -->
+        <button
+          onclick="openTaskModal()"
+          class="flex items-center gap-1.5 bg-sky-600 hover:bg-sky-500 text-white font-medium px-3.5 py-1.5 rounded-lg text-xs sm:text-sm shadow-lg shadow-sky-600/20 transition"
+        >
+          <span>+ Task Nou</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- FIREBASE CONFIG BANNER (Optional - pentru sincronizare multi-user reală) -->
+  <div id="localModeBanner" class="bg-indigo-950/60 border-b border-indigo-800/50 px-4 py-2 text-xs text-indigo-200 flex flex-wrap items-center justify-between gap-2">
+    <div class="flex items-center gap-2">
+      <span>⚡</span>
+      <span>
+        <strong>Mod Local / Demo activ:</strong> Datele și pozele se salvează în browserul tău. Pentru sincronizare live între toți cei 10–15 prieteni, conectează URL-ul tău Firebase Realtime Database.
+      </span>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="openFirebaseModal()" class="underline hover:text-white font-medium">Conectează Firebase URL</button>
+      <button onclick="document.getElementById('localModeBanner').classList.add('hidden')" class="text-indigo-400 hover:text-white ml-2">✕</button>
+    </div>
+  </div>
+
+  <!-- KANBAN BOARD -->
+  <main class="flex-1 overflow-x-auto p-4">
+    <div id="boardContainer" class="max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4 min-h-[calc(100vh-140px)]">
+      <!-- Coloanele se randează dinamic din JS -->
+    </div>
+  </main>
+
+  <!-- MODAL ADAUGARE / EDITARE TASK + POZE -->
+  <div id="taskModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-40 hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-800 sticky top-0 bg-slate-900 z-10">
+        <h2 id="taskModalTitle" class="font-bold text-base sm:text-lg text-white">Task Nou</h2>
+        <button onclick="closeTaskModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+
+      <form id="taskForm" class="p-5 space-y-4">
+        <input type="hidden" id="taskId" />
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Titlu Task / Bug *</label>
+          <input
+            id="taskTitle"
+            type="text"
+            required
+            placeholder="Ex: Bug duplicare iteme la portbagaj / Verificare resmon poliție"
+            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Coloană</label>
+            <select id="taskColumn" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500">
+              <option value="todo">📋 De Făcut (To-Do)</option>
+              <option value="inprogress">⚙️ În Lucru</option>
+              <option value="testing">🧪 De Testat (QA)</option>
+              <option value="bugs">🐛 Bug-uri Găsite</option>
+              <option value="done">✅ Finalizat (Done)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Categorie</label>
+            <select id="taskCategory" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500">
+              <option value="Infrastructură">Infrastructură</option>
+              <option value="Gameplay & Joburi">Gameplay & Joburi</option>
+              <option value="Facțiuni">Facțiuni</option>
+              <option value="UI & Optimizare">UI & Optimizare</option>
+              <option value="Securitate & Anticheat">Securitate & Anticheat</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Prioritate</label>
+            <select id="taskPriority" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500">
+              <option value="low">🟢 Scăzută</option>
+              <option value="medium" selected>🟡 Medie</option>
+              <option value="high">🟠 Ridicată</option>
+              <option value="critical">🔴 Critică / Exploit</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Descriere & Pași de reproducere / testare</label>
+          <textarea
+            id="taskDescription"
+            rows="3"
+            placeholder="Detalii script, coordonate, comenzi de test sau ce trebuie verificat..."
+            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500"
+          ></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Note QA / Rezultat Testare</label>
+          <textarea
+            id="taskQaNotes"
+            rows="2"
+            placeholder="Ex: Testat în 2 jucători pe server, resmon 0.02ms, nu mai dă eroare în F8..."
+            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500"
+          ></textarea>
+        </div>
+
+        <!-- SECTIUNE ATASARE POZE / SCREENSHOT-URI -->
+        <div class="border border-slate-700/80 rounded-xl p-3.5 bg-slate-800/40">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-semibold text-sky-400 flex items-center gap-1.5">
+              <span>🖼️ Poze / Screenshot-uri atașate</span>
+              <span id="imageCounterLabel" class="text-slate-400 font-normal">(0 / 6)</span>
+            </label>
+            <span class="text-[11px] text-slate-400">Suportă <strong>Ctrl+V</strong> (Paste) sau Drag & Drop</span>
+          </div>
+
+          <!-- DROPZONE -->
+          <div
+            id="imageDropzone"
+            onclick="document.getElementById('imageFileInput').click()"
+            class="border-2 border-dashed border-slate-600 hover:border-sky-500 rounded-lg p-4 text-center cursor-pointer transition bg-slate-900/50"
+          >
+            <input
+              id="imageFileInput"
+              type="file"
+              accept="image/*"
+              multiple
+              class="hidden"
+              onchange="handleImageFiles(this.files)"
+            />
+            <p class="text-xs text-slate-300 font-medium">Click pentru a alege poze, trage fișierele aici sau apasă <kbd class="px-1.5 py-0.5 bg-slate-800 border border-slate-600 rounded text-[10px]">Ctrl + V</kbd></p>
+            <p class="text-[11px] text-slate-500 mt-1">Se comprimă automat (max 1280px WebP/JPEG) pentru încărcare instantă în echipă</p>
+          </div>
+
+          <!-- OPTIUNE LINK EXTERN IMAGINE (Discord CDN / Imgur) -->
+          <div class="flex gap-2 mt-2.5">
+            <input
+              id="externalImageUrlInput"
+              type="url"
+              placeholder="Sau lipește un link direct de imagine (https://...)"
+              class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+            />
+            <button
+              type="button"
+              onclick="addExternalImageUrl()"
+              class="bg-slate-700 hover:bg-slate-600 text-xs text-white px-3 py-1.5 rounded-lg transition"
+            >
+              + Adaugă Link
+            </button>
+          </div>
+
+          <!-- PREVIEW GRID POZE ATASATE -->
+          <div id="modalImagePreviewGrid" class="grid grid-cols-3 sm:grid-cols-4 gap-2.5 mt-3"></div>
+        </div>
+
+        <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+          <button
+            type="button"
+            id="deleteTaskBtn"
+            onclick="deleteCurrentTask()"
+            class="hidden bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 px-3 py-2 rounded-lg text-xs font-medium transition"
+          >
+            🗑️ Șterge Task
+          </button>
+          <div class="flex items-center gap-2 ml-auto">
+            <button type="button" onclick="closeTaskModal()" class="px-4 py-2 rounded-lg text-xs sm:text-sm text-slate-300 hover:bg-slate-800 transition">
+              Anulează
+            </button>
+            <button type="submit" class="bg-sky-600 hover:bg-sky-500 text-white font-medium px-5 py-2 rounded-lg text-xs sm:text-sm shadow-lg shadow-sky-600/20 transition">
+              Salvează Task
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX FULLSCREEN PENTRU VIZUALIZARE POZE -->
+  <div id="lightboxModal" onclick="closeLightbox()" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex-col items-center justify-center p-4">
+    <div class="max-w-5xl w-full flex flex-col items-center" onclick="event.stopPropagation()">
+      <div class="w-full flex items-center justify-between mb-3 text-slate-300 text-xs sm:text-sm">
+        <span id="lightboxCaption" class="font-medium truncate">Screenshot Task</span>
+        <div class="flex items-center gap-3">
+          <a id="lightboxDownloadLink" href="#" download="fivem-screenshot.jpg" class="bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-lg text-sky-400 transition">
+            ⬇️ Descarcă
+          </a>
+          <button onclick="closeLightbox()" class="bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-lg text-white">✕ Închide</button>
+        </div>
+      </div>
+      <img id="lightboxImg" src="" alt="Preview" class="max-h-[82vh] max-w-full rounded-xl border border-slate-700 shadow-2xl object-contain" />
+    </div>
+  </div>
+
+  <!-- DRAWER AUDIT LOG -->
+  <aside id="auditDrawer" class="fixed inset-y-0 right-0 w-full max-w-md bg-slate-900 border-l border-slate-800 shadow-2xl z-40 transform translate-x-full transition-transform duration-200 flex flex-col">
+    <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+      <div>
+        <h2 class="font-bold text-base text-white flex items-center gap-2">📜 Audit Log Live</h2>
+        <p class="text-xs text-slate-400">Istoricul complet al modificărilor echipei</p>
+      </div>
+      <button onclick="toggleAuditDrawer()" class="text-slate-400 hover:text-white text-lg">✕</button>
+    </div>
+
+    <div class="p-3 border-b border-slate-800 bg-slate-900/60 space-y-2">
+      <div class="flex gap-2">
+        <input
+          id="auditSearchInput"
+          type="text"
+          oninput="renderAuditLogs()"
+          placeholder="Filtrează după membru sau task..."
+          class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500"
+        />
+        <select id="auditTypeFilter" onchange="renderAuditLogs()" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
+          <option value="ALL">Toate</option>
+          <option value="CREATE">Creare</option>
+          <option value="MOVE">Mutare</option>
+          <option value="CLAIM">Preluare</option>
+          <option value="IMAGE">Poze</option>
+          <option value="EDIT">Editare</option>
+          <option value="DELETE">Ștergere</option>
+        </select>
+      </div>
+      <div class="flex items-center justify-between text-xs">
+        <div class="flex gap-2">
+          <button onclick="exportAuditTxt()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1 rounded text-sky-400 transition">
+            📋 Export Discord (.txt)
+          </button>
+          <button onclick="exportAuditJson()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1 rounded text-slate-300 transition">
+            JSON
+          </button>
+        </div>
+        <button onclick="clearAuditLogs()" class="text-rose-400 hover:text-rose-300 underline">
+          Golește Log
+        </button>
+      </div>
+    </div>
+
+    <div id="auditLogList" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
+  </aside>
+
+  <!-- MODAL NICKNAME -->
+  <div id="nicknameModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-sm p-5 shadow-2xl">
+      <h3 class="font-bold text-base text-white mb-1">Identificare Membru Echipă</h3>
+      <p class="text-xs text-slate-400 mb-4">Numele tău va apărea pe task-urile preluate, la pozele încărcate și în Audit Log.</p>
+      <input
+        id="nicknameInput"
+        type="text"
+        placeholder="Ex: clauzera / Andrei / Dev_Alex"
+        class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white mb-4 focus:outline-none focus:border-sky-500"
+      />
+      <div class="flex justify-end gap-2">
+        <button onclick="closeNicknameModal()" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white">Închide</button>
+        <button onclick="saveNickname()" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium px-4 py-1.5 rounded-lg">Salvează Nume</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL FIREBASE URL -->
+  <div id="firebaseModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-md p-5 shadow-2xl">
+      <h3 class="font-bold text-base text-white mb-1">Conectare Firebase Realtime Database</h3>
+      <p class="text-xs text-slate-400 mb-3">
+        Lipește URL-ul bazei tale de date Firebase (ex: <code class="text-sky-400">https://proiectul-tau-default-rtdb.europe-west1.firebasedatabase.app</code>) pentru sincronizare live între toți prietenii.
+      </p>
+      <input
+        id="firebaseUrlInput"
+        type="url"
+        placeholder="https://...-default-rtdb.firebaseio.com"
+        class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white mb-4 focus:outline-none focus:border-sky-500"
+      />
+      <div class="flex justify-between items-center">
+        <button onclick="disconnectFirebase()" class="text-xs text-rose-400 hover:underline">Revino la Mod Local</button>
+        <div class="flex gap-2">
+          <button onclick="closeFirebaseModal()" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white">Anulează</button>
+          <button onclick="saveFirebaseUrl()" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium px-4 py-1.5 rounded-lg">Conectează</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==================== CONFIGURARE & STARE ====================
+    const COLUMNS = [
+      { id: 'todo', title: '📋 De Făcut (To-Do)', accent: 'border-slate-600' },
+      { id: 'inprogress', title: '⚙️ În Lucru', accent: 'border-sky-500' },
+      { id: 'testing', title: '🧪 De Testat (QA)', accent: 'border-amber-500' },
+      { id: 'bugs', title: '🐛 Bug-uri Găsite', accent: 'border-rose-500' },
+      { id: 'done', title: '✅ Finalizat (Done)', accent: 'border-emerald-500' }
+    ];
+
+    const PRIORITY_BADGES = {
+      low: { label: 'Scăzută', cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
+      medium: { label: 'Medie', cls: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
+      high: { label: 'Ridicată', cls: 'bg-orange-500/15 text-orange-300 border-orange-500/30' },
+      critical: { label: 'Critică', cls: 'bg-rose-500/15 text-rose-300 border-rose-500/30' }
+    };
+
+    const MAX_IMAGES_PER_TASK = 6;
+    let currentUser = localStorage.getItem('fivem_hub_user') || '';
+    let firebaseBaseUrl = localStorage.getItem('fivem_hub_firebase_url') || '';
+    let tasks = [];
+    let auditLogs = [];
+    let modalDraftImages = []; // Array de obiecte { id, url, addedBy, addedAt }
+    let pollInterval = null;
+
+    // ==================== INITIALIZARE ====================
+    window.addEventListener('DOMContentLoaded', () => {
+      updateUserLabel();
+      setupDropzoneAndPaste();
+
+      document.getElementById('searchInput').addEventListener('input', renderBoard);
+      document.getElementById('categoryFilter').addEventListener('change', renderBoard);
+
+      if (firebaseBaseUrl) {
+        enableFirebaseSync();
+      } else {
+        loadLocalData();
+      }
+
+      if (!currentUser) {
+        setTimeout(() => openNicknameModal(), 400);
+      }
+    });
+
+    function getActorName() {
+      return currentUser && currentUser.trim() ? currentUser.trim() : 'Membru_Anonim';
+    }
+
+    function updateUserLabel() {
+      document.getElementById('currentUserLabel').textContent = currentUser || 'Setează Nume';
+    }
+
+    // ==================== STORAGE (LOCAL + FIREBASE REST POLLING/SYNC) ====================
+    function loadLocalData() {
+      const savedTasks = localStorage.getItem('fivem_hub_tasks_v2');
+      const savedLogs = localStorage.getItem('fivem_hub_logs_v2');
+
+      if (savedTasks) {
+        tasks = JSON.parse(savedTasks);
+      } else {
+        tasks = getDefaultTasks();
+        saveTasksState();
+      }
+
+      if (savedLogs) {
+        auditLogs = JSON.parse(savedLogs);
+      } else {
+        auditLogs = [{
+          id: 'log_' + Date.now(),
+          type: 'CREATE',
+          actor: 'Sistem',
+          taskTitle: 'Inițializare FiveM Dev & QA Hub',
+          details: 'Board creat cu suport pentru poze și Audit Log',
+          timestamp: new Date().toISOString()
+        }];
+        saveLogsState();
+      }
+
+      renderBoard();
+      renderAuditLogs();
+    }
+
+    function getDefaultTasks() {
+      return [
+        {
+          id: 't_1',
+          title: 'Testare anti-duplicare inventar & portbagaj',
+          column: 'testing',
+          category: 'Securitate & Anticheat',
+          priority: 'critical',
+          description: 'Verifică drop/pickup simultan între 2 jucători și deconectare forțată (quit) în timpul transferului din stash.',
+          qaNotes: 'Atașați screenshot din consola F8 dacă apare orice warning.',
+          assignee: '',
+          createdBy: 'Admin',
+          updatedAt: new Date().toISOString(),
+          images: []
+        },
+        {
+          id: 't_2',
+          title: 'Verificare consum resmon (idle & în zonă aglomerată)',
+          column: 'todo',
+          category: 'UI & Optimizare',
+          priority: 'high',
+          description: 'Niciun script nu trebuie să depășească 0.05 - 0.10 ms în idle. Atașați poză cu resmon 1 la fiecare test.',
+          qaNotes: '',
+          assignee: '',
+          createdBy: 'Admin',
+          updatedAt: new Date().toISOString(),
+          images: []
+        },
+        {
+          id: 't_3',
+          title: 'Configurare garaje și armurerii Poliție / SMURD',
+          column: 'inprogress',
+          category: 'Facțiuni',
+          priority: 'medium',
+          description: 'Setare grade, permisiuni boss menu și spawn puncte elicopter.',
+          qaNotes: '',
+          assignee: '',
+          createdBy: 'Admin',
+          updatedAt: new Date().toISOString(),
+          images: []
+        }
+      ];
+    }
+
+    async function saveTasksState() {
+      localStorage.setItem('fivem_hub_tasks_v2', JSON.stringify(tasks));
+      if (firebaseBaseUrl) {
+        try {
+          await fetch(`${firebaseBaseUrl}/kanban_tasks.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(tasks)
+          });
+        } catch (e) {
+          console.error('Eroare sync Firebase tasks:', e);
+        }
+      }
+    }
+
+    async function saveLogsState() {
+      if (auditLogs.length > 300) auditLogs = auditLogs.slice(0, 300);
+      localStorage.setItem('fivem_hub_logs_v2', JSON.stringify(auditLogs));
+      if (firebaseBaseUrl) {
+        try {
+          await fetch(`${firebaseBaseUrl}/kanban_audit_logs.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(auditLogs)
+          });
+        } catch (e) {
+          console.error('Eroare sync Firebase logs:', e);
+        }
+      }
+    }
+
+    function enableFirebaseSync() {
+      document.getElementById('localModeBanner').classList.add('hidden');
+      const statusEl = document.getElementById('syncStatus');
+      statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping"></span> Firebase Live`;
+      statusEl.className = 'inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30';
+
+      fetchFromFirebase();
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(fetchFromFirebase, 4000);
+    }
+
+    async function fetchFromFirebase() {
+      if (!firebaseBaseUrl) return;
+      try {
+        const [tRes, lRes] = await Promise.all([
+          fetch(`${firebaseBaseUrl}/kanban_tasks.json`),
+          fetch(`${firebaseBaseUrl}/kanban_audit_logs.json`)
+        ]);
+        const remoteTasks = await tRes.json();
+        const remoteLogs = await lRes.json();
+
+        if (Array.isArray(remoteTasks)) {
+          tasks = remoteTasks;
+          renderBoard();
+        }
+        if (Array.isArray(remoteLogs)) {
+          auditLogs = remoteLogs;
+          renderAuditLogs();
+        }
+      } catch (err) {
+        console.warn('Polling Firebase întrerupt temporar:', err);
+      }
+    }
+
+    // ==================== AUDIT LOG HELPER ====================
+    function logAudit(type, taskTitle, details) {
+      const entry = {
+        id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        type,
+        actor: getActorName(),
+        taskTitle,
+        details,
+        timestamp: new Date().toISOString()
+      };
+      auditLogs.unshift(entry);
+      saveLogsState();
+      renderAuditLogs();
+    }
+
+    // ==================== PROCESARE & COMPRESIE IMAGINI ====================
+    function setupDropzoneAndPaste() {
+      const dropzone = document.getElementById('imageDropzone');
+
+      dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('img-drop-active');
+      });
+
+      dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('img-drop-active');
+      });
+
+      dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('img-drop-active');
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          handleImageFiles(e.dataTransfer.files);
+        }
+      });
+
+      // Suport Ctrl+V oriunde când modalul de task este deschis
+      window.addEventListener('paste', (e) => {
+        const modal = document.getElementById('taskModal');
+        if (modal.classList.contains('hidden')) return;
+
+        const items = (e.clipboardData || e.originalEvent.clipboardData)?.items;
+        if (!items) return;
+
+        const imageFiles = [];
+        for (const item of items) {
+          if (item.type.indexOf('image') !== -1) {
+            const file = item.getAsFile();
+            if (file) imageFiles.push(file);
+          }
+        }
+        if (imageFiles.length > 0) {
+          e.preventDefault();
+          handleImageFiles(imageFiles);
+        }
+      });
+    }
+
+    async function handleImageFiles(fileList) {
+      const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+      if (!files.length) return;
+
+      for (const file of files) {
+        if (modalDraftImages.length >= MAX_IMAGES_PER_TASK) {
+          alert(`Poți atașa maxim ${MAX_IMAGES_PER_TASK} poze per task.`);
+          break;
+        }
+        try {
+          const compressedDataUrl = await compressImageToDataUrl(file, 1280, 0.78);
+          modalDraftImages.push({
+            id: 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+            url: compressedDataUrl,
+            addedBy: getActorName(),
+            addedAt: new Date().toISOString()
+          });
+        } catch (err) {
+          console.error('Eroare procesare imagine:', err);
+        }
+      }
+      renderModalImagePreviews();
+    }
+
+    function compressImageToDataUrl(file, maxWidth = 1280, quality = 0.78) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            let width = img.width;
+            let height = img.height;
+
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Folosim WebP dacă browserul suportă, altfel JPEG
+            const dataUrl = canvas.toDataURL('image/webp', quality);
+            resolve(dataUrl);
+          };
+          img.onerror = reject;
+          img.src = event.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function addExternalImageUrl() {
+      const input = document.getElementById('externalImageUrlInput');
+      const url = input.value.trim();
+      if (!url) return;
+
+      if (modalDraftImages.length >= MAX_IMAGES_PER_TASK) {
+        alert(`Poți atașa maxim ${MAX_IMAGES_PER_TASK} poze per task.`);
+        return;
+      }
+
+      modalDraftImages.push({
+        id: 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        url,
+        addedBy: getActorName(),
+        addedAt: new Date().toISOString()
+      });
+      input.value = '';
+      renderModalImagePreviews();
+    }
+
+    function removeDraftImage(imgId) {
+      modalDraftImages = modalDraftImages.filter(img => img.id !== imgId);
+      renderModalImagePreviews();
+    }
+
+    function renderModalImagePreviews() {
+      const grid = document.getElementById('modalImagePreviewGrid');
+      document.getElementById('imageCounterLabel').textContent = `(${modalDraftImages.length} / ${MAX_IMAGES_PER_TASK})`;
+
+      if (!modalDraftImages.length) {
+        grid.innerHTML = '';
+        return;
+      }
+
+      grid.innerHTML = modalDraftImages.map((img, idx) => `
+        <div class="relative group rounded-lg overflow-hidden border border-slate-700 bg-slate-900 aspect-video">
+          <img
+            src="${img.url}"
+            alt="Atașament ${idx + 1}"
+            onclick="openLightbox('${img.url}', 'Atașat de ${escapeHtml(img.addedBy)}')"
+            class="w-full h-full object-cover cursor-zoom-in group-hover:scale-105 transition"
+          />
+          <button
+            type="button"
+            onclick="removeDraftImage('${img.id}')"
+            title="Șterge poza"
+            class="absolute top-1 right-1 bg-rose-600 hover:bg-rose-500 text-white rounded-full w-5 h-5 text-[11px] flex items-center justify-center shadow"
+          >
+            ✕
+          </button>
+          <span class="absolute bottom-0 inset-x-0 bg-black/70 text-[10px] text-slate-200 px-1.5 py-0.5 truncate">
+            📷 ${escapeHtml(img.addedBy)}
+          </span>
+        </div>
+      `).join('');
+    }
+
+    // ==================== LIGHTBOX ====================
+    function openLightbox(url, caption = '') {
+      document.getElementById('lightboxImg').src = url;
+      document.getElementById('lightboxCaption').textContent = caption || 'Screenshot Task FiveM';
+      document.getElementById('lightboxDownloadLink').href = url;
+      const lb = document.getElementById('lightboxModal');
+      lb.classList.remove('hidden');
+      lb.classList.add('flex');
+    }
+
+    function closeLightbox() {
+      const lb = document.getElementById('lightboxModal');
+      lb.classList.add('hidden');
+      lb.classList.remove('flex');
+      document.getElementById('lightboxImg').src = '';
+    }
+
+    // ==================== RENDER KANBAN BOARD ====================
+    function renderBoard() {
+      const container = document.getElementById('boardContainer');
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      const catFilter = document.getElementById('categoryFilter').value;
+
+      const filtered = tasks.filter(t => {
+        const matchesCat = catFilter === 'ALL' || t.category === catFilter;
+        const matchesQuery = !query ||
+          t.title.toLowerCase().includes(query) ||
+          (t.description && t.description.toLowerCase().includes(query)) ||
+          (t.assignee && t.assignee.toLowerCase().includes(query)) ||
+          (t.qaNotes && t.qaNotes.toLowerCase().includes(query));
+        return matchesCat && matchesQuery;
+      });
+
+      container.innerHTML = COLUMNS.map((col, colIndex) => {
+        const colTasks = filtered.filter(t => t.column === col.id);
+
+        return `
+          <section
+            class="bg-slate-900/70 border border-slate-800 rounded-xl flex flex-col max-h-[calc(100vh-145px)] transition"
+            ondragover="event.preventDefault(); this.classList.add('drag-over')"
+            ondragleave="this.classList.remove('drag-over')"
+            ondrop="handleDrop(event, '${col.id}', this)"
+          >
+            <div class="p-3 border-b-2 ${col.accent} flex items-center justify-between bg-slate-900 rounded-t-xl">
+              <h3 class="font-semibold text-xs sm:text-sm text-slate-100">${col.title}</h3>
+              <span class="text-xs font-bold bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full">${colTasks.length}</span>
+            </div>
+
+            <div class="p-2.5 space-y-2.5 overflow-y-auto flex-1">
+              ${colTasks.length === 0 ? `<p class="text-xs text-slate-600 text-center py-6 italic">Niciun task aici</p>` : ''}
+              ${colTasks.map(task => renderTaskCard(task, colIndex)).join('')}
+            </div>
+          </section>
+        `;
+      }).join('');
+    }
+
+    function renderTaskCard(task, colIndex) {
+      const prio = PRIORITY_BADGES[task.priority] || PRIORITY_BADGES.medium;
+      const imgs = Array.isArray(task.images) ? task.images : [];
+      const isMine = task.assignee && task.assignee === getActorName();
+
+      return `
+        <article
+          draggable="true"
+          ondragstart="handleDragStart(event, '${task.id}')"
+          class="bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 rounded-lg p-3 shadow-sm transition group cursor-grab active:cursor-grabbing"
+        >
+          <!-- TOP TAGS -->
+          <div class="flex items-center justify-between gap-1.5 mb-1.5">
+            <span class="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-700/80 text-sky-300 truncate">
+              ${escapeHtml(task.category)}
+            </span>
+            <div class="flex items-center gap-1">
+              ${imgs.length > 0 ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-medium">🖼️ ${imgs.length}</span>` : ''}
+              <span class="text-[10px] font-medium px-2 py-0.5 rounded border ${prio.cls}">
+                ${prio.label}
+              </span>
+            </div>
+          </div>
+
+          <!-- TITLE -->
+          <h4
+            onclick="openTaskModal('${task.id}')"
+            class="font-semibold text-xs sm:text-sm text-white hover:text-sky-400 cursor-pointer leading-snug mb-1.5"
+          >
+            ${escapeHtml(task.title)}
+          </h4>
+
+          <!-- DESCRIPTION -->
+          ${task.description ? `<p class="text-xs text-slate-400 line-clamp-2 mb-2">${escapeHtml(task.description)}</p>` : ''}
+
+          <!-- THUMBNAIL GALLERY PREVIEW PE CARD -->
+          ${imgs.length > 0 ? `
+            <div class="grid ${imgs.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-1.5 mb-2.5">
+              ${imgs.slice(0, 2).map((img, i) => `
+                <div class="relative rounded overflow-hidden border border-slate-700 bg-slate-950 h-20 group/img">
+                  <img
+                    src="${img.url}"
+                    alt="Screenshot"
+                    onclick="openLightbox('${img.url}', '${escapeHtml(task.title)} — atașat de ${escapeHtml(img.addedBy)}')"
+                    class="w-full h-full object-cover cursor-zoom-in hover:opacity-90 transition"
+                  />
+                  ${i === 1 && imgs.length > 2 ? `
+                    <div
+                      onclick="openTaskModal('${task.id}')"
+                      class="absolute inset-0 bg-black/70 flex items-center justify-center text-xs font-bold text-white cursor-pointer"
+                    >
+                      +${imgs.length - 2} poze
+                    </div>
+                  ` : ''}
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+
+          <!-- QA NOTES -->
+          ${task.qaNotes ? `
+            <div class="bg-amber-500/10 border border-amber-500/20 rounded px-2 py-1 text-[11px] text-amber-200 mb-2">
+              <strong>QA:</strong> ${escapeHtml(task.qaNotes)}
+            </div>
+          ` : ''}
+
+          <!-- FOOTER: ASSIGNEE + QUICK MOVE -->
+          <div class="flex items-center justify-between pt-2 border-t border-slate-700/60 gap-1">
+            <button
+              onclick="toggleClaimTask('${task.id}')"
+              class="text-[11px] px-2 py-0.5 rounded transition truncate max-w-[140px] ${
+                task.assignee
+                  ? (isMine ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30' : 'bg-slate-700 text-slate-200')
+                  : 'bg-slate-700/50 hover:bg-sky-600/30 text-slate-400 hover:text-sky-300'
+              }"
+              title="Preia sau eliberează acest task"
+            >
+              ${task.assignee ? `🛠️ ${escapeHtml(task.assignee)}` : '✋ Preia'}
+            </button>
+
+            <div class="flex items-center gap-1">
+              ${colIndex > 0 ? `
+                <button
+                  onclick="moveTaskByStep('${task.id}', -1)"
+                  title="Mută la stânga"
+                  class="px-1.5 py-0.5 rounded bg-slate-700/70 hover:bg-slate-600 text-[11px] text-slate-300"
+                >◀</button>
+              ` : ''}
+              <button
+                onclick="openTaskModal('${task.id}')"
+                title="Editează / Adaugă poze"
+                class="px-1.5 py-0.5 rounded bg-slate-700/70 hover:bg-slate-600 text-[11px] text-slate-300"
+              >✏️</button>
+              ${colIndex < COLUMNS.length - 1 ? `
+                <button
+                  onclick="moveTaskByStep('${task.id}', 1)"
+                  title="Mută la dreapta"
+                  class="px-1.5 py-0.5 rounded bg-slate-700/70 hover:bg-slate-600 text-[11px] text-slate-300"
+                >▶</button>
+              ` : ''}
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    // ==================== DRAG & DROP + ACTIUNI TASK ====================
+    let draggedTaskId = null;
+
+    function handleDragStart(e, id) {
+      draggedTaskId = id;
+      e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleDrop(e, targetColId, el) {
+      e.preventDefault();
+      el.classList.remove('drag-over');
+      if (!draggedTaskId) return;
+      moveTaskToColumn(draggedTaskId, targetColId);
+      draggedTaskId = null;
+    }
+
+    function moveTaskByStep(taskId, delta) {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+      const idx = COLUMNS.findIndex(c => c.id === task.column);
+      const nextIdx = idx + delta;
+      if (nextIdx >= 0 && nextIdx < COLUMNS.length) {
+        moveTaskToColumn(taskId, COLUMNS[nextIdx].id);
+      }
+    }
+
+    function moveTaskToColumn(taskId, newColId) {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task || task.column === newColId) return;
+
+      const oldColName = COLUMNS.find(c => c.id === task.column)?.title || task.column;
+      const newColName = COLUMNS.find(c => c.id === newColId)?.title || newColId;
+
+      task.column = newColId;
+      task.updatedAt = new Date().toISOString();
+
+      saveTasksState();
+      renderBoard();
+      logAudit('MOVE', task.title, `Mutat din "${oldColName}" în "${newColName}"`);
+    }
+
+    function toggleClaimTask(taskId) {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      const actor = getActorName();
+      if (task.assignee === actor) {
+        task.assignee = '';
+        logAudit('CLAIM', task.title, `${actor} a eliberat task-ul`);
+      } else {
+        const prev = task.assignee;
+        task.assignee = actor;
+        logAudit('CLAIM', task.title, prev ? `Preluat de la ${prev}` : `Preluat de ${actor}`);
+      }
+
+      task.updatedAt = new Date().toISOString();
+      saveTasksState();
+      renderBoard();
+    }
+
+    // ==================== MODAL CRUD TASK ====================
+    function openTaskModal(taskId = null) {
+      const modal = document.getElementById('taskModal');
+      const deleteBtn = document.getElementById('deleteTaskBtn');
+      document.getElementById('externalImageUrlInput').value = '';
+
+      if (taskId) {
+        const task = tasks.find(t => t.id === taskId);
+        if (!task) return;
+        document.getElementById('taskModalTitle').textContent = 'Editează Task & Atașamente';
+        document.getElementById('taskId').value = task.id;
+        document.getElementById('taskTitle').value = task.title;
+        document.getElementById('taskColumn').value = task.column;
+        document.getElementById('taskCategory').value = task.category;
+        document.getElementById('taskPriority').value = task.priority;
+        document.getElementById('taskDescription').value = task.description || '';
+        document.getElementById('taskQaNotes').value = task.qaNotes || '';
+        modalDraftImages = Array.isArray(task.images) ? JSON.parse(JSON.stringify(task.images)) : [];
+        deleteBtn.classList.remove('hidden');
+      } else {
+        document.getElementById('taskModalTitle').textContent = 'Adaugă Task / Bug Nou';
+        document.getElementById('taskForm').reset();
+        document.getElementById('taskId').value = '';
+        modalDraftImages = [];
+        deleteBtn.classList.add('hidden');
+      }
+
+      renderModalImagePreviews();
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeTaskModal() {
+      const modal = document.getElementById('taskModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    document.getElementById('taskForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = document.getElementById('taskId').value;
+      const title = document.getElementById('taskTitle').value.trim();
+      const column = document.getElementById('taskColumn').value;
+      const category = document.getElementById('taskCategory').value;
+      const priority = document.getElementById('taskPriority').value;
+      const description = document.getElementById('taskDescription').value.trim();
+      const qaNotes = document.getElementById('taskQaNotes').value.trim();
+
+      if (!title) return;
+
+      if (id) {
+        const task = tasks.find(t => t.id === id);
+        if (!task) return;
+
+        const oldImgCount = Array.isArray(task.images) ? task.images.length : 0;
+        const newImgCount = modalDraftImages.length;
+
+        task.title = title;
+        task.column = column;
+        task.category = category;
+        task.priority = priority;
+        task.description = description;
+        task.qaNotes = qaNotes;
+        task.images = modalDraftImages;
+        task.updatedAt = new Date().toISOString();
+
+        if (newImgCount > oldImgCount) {
+          logAudit('IMAGE', title, `A atașat +${newImgCount - oldImgCount} poze (total: ${newImgCount})`);
+        } else if (newImgCount < oldImgCount) {
+          logAudit('IMAGE', title, `A șters ${oldImgCount - newImgCount} poze (rămase: ${newImgCount})`);
+        } else {
+          logAudit('EDIT', title, `Actualizat detalii / note QA`);
+        }
+      } else {
+        const newTask = {
+          id: 't_' + Date.now(),
+          title,
+          column,
+          category,
+          priority,
+          description,
+          qaNotes,
+          assignee: '',
+          createdBy: getActorName(),
+          updatedAt: new Date().toISOString(),
+          images: modalDraftImages
+        };
+        tasks.unshift(newTask);
+        const colName = COLUMNS.find(c => c.id === column)?.title || column;
+        const imgNote = modalDraftImages.length > 0 ? ` cu ${modalDraftImages.length} poze atașate` : '';
+        logAudit('CREATE', title, `Creat în "${colName}"${imgNote}`);
+      }
+
+      saveTasksState();
+      renderBoard();
+      closeTaskModal();
+    });
+
+    function deleteCurrentTask() {
+      const id = document.getElementById('taskId').value;
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+
+      if (confirm(`Sigur vrei să ștergi task-ul "${task.title}"?`)) {
+        tasks = tasks.filter(t => t.id !== id);
+        saveTasksState();
+        renderBoard();
+        logAudit('DELETE', task.title, 'Task șters definitiv');
+        closeTaskModal();
+      }
+    }
+
+    // ==================== AUDIT LOG UI & EXPORT ====================
+    function toggleAuditDrawer() {
+      document.getElementById('auditDrawer').classList.toggle('translate-x-full');
+    }
+
+    function renderAuditLogs() {
+      const list = document.getElementById('auditLogList');
+      const badge = document.getElementById('auditCountBadge');
+      const query = document.getElementById('auditSearchInput').value.toLowerCase().trim();
+      const typeFilter = document.getElementById('auditTypeFilter').value;
+
+      badge.textContent = auditLogs.length;
+
+      const filtered = auditLogs.filter(l => {
+        const matchType = typeFilter === 'ALL' || l.type === typeFilter;
+        const matchText = !query ||
+          l.actor.toLowerCase().includes(query) ||
+          l.taskTitle.toLowerCase().includes(query) ||
+          l.details.toLowerCase().includes(query);
+        return matchType && matchText;
+      });
+
+      const typeColors = {
+        CREATE: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
+        MOVE: 'border-sky-500/40 bg-sky-500/10 text-sky-300',
+        CLAIM: 'border-indigo-500/40 bg-indigo-500/10 text-indigo-300',
+        IMAGE: 'border-purple-500/40 bg-purple-500/10 text-purple-300',
+        EDIT: 'border-amber-500/40 bg-amber-500/10 text-amber-300',
+        DELETE: 'border-rose-500/40 bg-rose-500/10 text-rose-300'
+      };
+
+      list.innerHTML = filtered.map(log => {
+        const dt = new Date(log.timestamp);
+        const formattedDate = dt.toLocaleDateString('ro-RO') + ' ' + dt.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const badgeCls = typeColors[log.type] || 'border-slate-600 bg-slate-800 text-slate-300';
+
+        return `
+          <div class="bg-slate-800/70 border border-slate-700/70 rounded-lg p-2.5 text-xs">
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <span class="font-semibold text-sky-400">👤 ${escapeHtml(log.actor)}</span>
+              <span class="px-1.5 py-0.5 rounded border text-[10px] font-bold ${badgeCls}">${log.type}</span>
+            </div>
+            <p class="font-medium text-slate-100 mb-0.5">${escapeHtml(log.taskTitle)}</p>
+            <p class="text-slate-400 text-[11px]">${escapeHtml(log.details)}</p>
+            <p class="text-[10px] text-slate-500 mt-1 text-right">${formattedDate}</p>
+          </div>
+        `;
+      }).join('') || `<p class="text-xs text-slate-500 text-center py-8">Nicio înregistrare găsită.</p>`;
+    }
+
+    function exportAuditTxt() {
+      const lines = auditLogs.map(l => {
+        const dt = new Date(l.timestamp).toLocaleString('ro-RO');
+        return `[${dt}] [${l.type}] ${l.actor} -> "${l.taskTitle}": ${l.details}`;
+      }).join('\n');
+      downloadFile('fivem-audit-log.txt', lines, 'text/plain');
+    }
+
+    function exportAuditJson() {
+      downloadFile('fivem-audit-log.json', JSON.stringify(auditLogs, null, 2), 'application/json');
+    }
+
+    function clearAuditLogs() {
+      if (!confirm('Sigur vrei să golești tot istoricul Audit Log?')) return;
+      auditLogs = [];
+      logAudit('DELETE', 'Audit Log', 'Istoricul a fost curățat manual');
+    }
+
+    function downloadFile(filename, content, mime) {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ==================== MODALE NICKNAME & FIREBASE ====================
+    function openNicknameModal() {
+      document.getElementById('nicknameInput').value = currentUser;
+      const m = document.getElementById('nicknameModal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+    function closeNicknameModal() {
+      const m = document.getElementById('nicknameModal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+    function saveNickname() {
+      const val = document.getElementById('nicknameInput').value.trim();
+      if (!val) return;
+      currentUser = val;
+      localStorage.setItem('fivem_hub_user', currentUser);
+      updateUserLabel();
+      renderBoard();
+      closeNicknameModal();
+    }
+
+    function openFirebaseModal() {
+      document.getElementById('firebaseUrlInput').value = firebaseBaseUrl;
+      const m = document.getElementById('firebaseModal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+    function closeFirebaseModal() {
+      const m = document.getElementById('firebaseModal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+    function saveFirebaseUrl() {
+      let url = document.getElementById('firebaseUrlInput').value.trim().replace(/\/+$/, '');
+      if (!url) return;
+      firebaseBaseUrl = url;
+      localStorage.setItem('fivem_hub_firebase_url', firebaseBaseUrl);
+      closeFirebaseModal();
+      enableFirebaseSync();
+    }
+    function disconnectFirebase() {
+      firebaseBaseUrl = '';
+      localStorage.removeItem('fivem_hub_firebase_url');
+      if (pollInterval) clearInterval(pollInterval);
+      closeFirebaseModal();
+      location.reload();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>

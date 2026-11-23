@@ -127,26 +127,20 @@
       </div>
 
       <div class="p-6 space-y-5 text-sm">
-        <!-- DESCRIERE -->
         <div>
           <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Descriere</h3>
           <div id="viewTaskDescription" class="bg-slate-800/60 border border-slate-700/70 rounded-xl p-4 text-slate-200 whitespace-pre-wrap leading-relaxed text-sm min-h-[70px]"></div>
         </div>
 
-        <!-- SECTIUNE NOTITE / COMENTARII (VIZIBILA MEREU + ADAUGARE RAPIDA) -->
         <div class="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 space-y-3">
           <div class="flex items-center justify-between">
             <h3 class="text-xs font-semibold uppercase tracking-wider text-amber-400">💬 Notițe & Comentarii</h3>
             <span id="viewNotesCounter" class="text-[11px] text-slate-400">0 notițe</span>
           </div>
 
-          <!-- Notița principală (dacă există din editare) -->
           <div id="viewMainNoteBox" class="hidden bg-amber-500/10 border border-amber-500/25 rounded-lg p-3 text-amber-100 whitespace-pre-wrap text-xs sm:text-sm"></div>
-
-          <!-- Lista de notițe adăugate de echipă -->
           <div id="viewNotesList" class="space-y-2 max-h-52 overflow-y-auto"></div>
 
-          <!-- Formular rapid de adăugare notiță nouă -->
           <form id="quickNoteForm" class="flex gap-2 pt-1">
             <input
               id="quickNoteInput"
@@ -163,7 +157,6 @@
           </form>
         </div>
 
-        <!-- POZE ATASATE -->
         <div id="viewTaskImagesSection" class="hidden">
           <h3 class="text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-2">🖼️ Poze atașate (click pentru mărire)</h3>
           <div id="viewTaskImagesGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
@@ -437,7 +430,6 @@
         }
       });
 
-      // Formular adăugare notiță rapidă în modalul de vizualizare
       document.getElementById('quickNoteForm').addEventListener('submit', (e) => {
         e.preventDefault();
         if (!activeViewingTaskId) return;
@@ -564,7 +556,6 @@
             lastTasksSnapshot = incomingTasksStr;
             renderBoard(false);
 
-            // Actualizează și notițele dacă modalul de vizualizare este deschis
             if (activeViewingTaskId && !document.getElementById('viewTaskModal').classList.contains('hidden')) {
               const currentTask = tasks.find(t => t.id === activeViewingTaskId);
               if (currentTask) renderViewModalNotes(currentTask);
@@ -1111,7 +1102,7 @@
       `;
     }
 
-    // ==================== DRAG & DROP + ACTIUNI TASK ====================
+    // ==================== DRAG & DROP + ACTIUNI TASK (STIVA LIFO - CAP DE LISTA) ====================
     let draggedTaskId = null;
 
     function handleDragStart(e, id) {
@@ -1138,18 +1129,28 @@
     }
 
     function moveTaskToColumn(taskId, newColId) {
-      const task = tasks.find(t => t.id === taskId);
-      if (!task || task.column === newColId) return;
+      const taskIndex = tasks.findIndex(t => t.id === taskId);
+      if (taskIndex === -1) return;
+      const task = tasks[taskIndex];
+      if (task.column === newColId) return;
 
       const oldColName = COLUMNS.find(c => c.id === task.column)?.title || task.column;
       const newColName = COLUMNS.find(c => c.id === newColId)?.title || newColId;
 
+      // Scoatem task-ul din poziția veche și îl inserăm PRIMUL în capul stivei (index 0)
+      tasks.splice(taskIndex, 1);
       task.column = newColId;
       task.updatedAt = new Date().toISOString();
+      tasks.unshift(task);
 
       saveTasksState();
       renderBoard(false);
-      logAudit('MOVE', task.title, `Mutat din "${oldColName}" în "${newColName}"`);
+
+      // Derulăm coloana destinație sus ca să se vadă imediat task-ul pus în capul stivei
+      const targetColEl = document.getElementById(`col-scroll-${newColId}`);
+      if (targetColEl) targetColEl.scrollTop = 0;
+
+      logAudit('MOVE', task.title, `Mutat din "${oldColName}" în "${newColName}" (în capul listei)`);
     }
 
     function toggleClaimTask(taskId) {
@@ -1220,9 +1221,11 @@
       if (!title) return;
 
       if (id) {
-        const task = tasks.find(t => t.id === id);
-        if (!task) return;
+        const taskIdx = tasks.findIndex(t => t.id === id);
+        if (taskIdx === -1) return;
+        const task = tasks[taskIdx];
 
+        const oldColumn = task.column;
         const oldImgCount = Array.isArray(task.images) ? task.images.length : 0;
         const newImgCount = modalDraftImages.length;
 
@@ -1233,10 +1236,19 @@
         task.images = modalDraftImages;
         task.updatedAt = new Date().toISOString();
 
+        // Dacă s-a schimbat coloana din dropdown, îl punem primul în capul stivei noii coloane
+        if (oldColumn !== column) {
+          tasks.splice(taskIdx, 1);
+          tasks.unshift(task);
+        }
+
         if (newImgCount > oldImgCount) {
           logAudit('IMAGE', title, `A atașat +${newImgCount - oldImgCount} poze (total: ${newImgCount})`);
         } else if (newImgCount < oldImgCount) {
           logAudit('IMAGE', title, `A șters ${oldImgCount - newImgCount} poze (rămase: ${newImgCount})`);
+        } else if (oldColumn !== column) {
+          const newColName = COLUMNS.find(c => c.id === column)?.title || column;
+          logAudit('MOVE', title, `Mutat în "${newColName}" (în capul listei)`);
         } else {
           logAudit('EDIT', title, `A actualizat task-ul / notița`);
         }
@@ -1261,6 +1273,10 @@
 
       saveTasksState();
       renderBoard(false);
+      if (id) {
+        const targetColEl = document.getElementById(`col-scroll-${column}`);
+        if (targetColEl) targetColEl.scrollTop = 0;
+      }
       closeTaskModal();
     });
 
